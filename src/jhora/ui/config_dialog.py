@@ -224,6 +224,48 @@ class ConfigTabPage(QWidget):
         self._meta_by_key: Dict[str, Dict[str, Any]] = {}
 
         self._build_ui()
+        self._wire_dynamic_behavior()
+        self._apply_dynamic_behavior()
+    def _wire_dynamic_behavior(self) -> None:
+        """
+        Wire UI dependencies between settings.
+        """
+        pos_type_widget = self._widgets.get("planet_position_type")
+        if isinstance(pos_type_widget, QComboBox):
+            pos_type_widget.currentIndexChanged.connect(self._apply_dynamic_behavior)
+
+    def _apply_dynamic_behavior(self) -> None:
+        """
+        Apply enable/disable rules based on current selections.
+        """
+        # True / Apparent dependency:
+        # If Position Type == True (i.e. "True"), aberration and deflection are not applicable.
+        pos_type_widget = self._widgets.get("planet_position_type")
+        use_aberr_widget = self._widgets.get("use_aberration_of_light")
+        use_defl_widget = self._widgets.get("use_gravitational_deflection")
+
+        is_true_position = False
+        if isinstance(pos_type_widget, QComboBox):
+            current_data = pos_type_widget.currentData()
+            is_true_position = bool(current_data)
+
+        enabled_for_apparent = not is_true_position
+
+        if use_aberr_widget is not None:
+            use_aberr_widget.setEnabled(enabled_for_apparent)
+            if not enabled_for_apparent:
+                use_aberr_widget.setToolTip("Used only for apparent positions.")
+            else:
+                meta = self._meta_by_key.get("use_aberration_of_light", {})
+                use_aberr_widget.setToolTip(str(meta.get("description", "")))
+
+        if use_defl_widget is not None:
+            use_defl_widget.setEnabled(enabled_for_apparent)
+            if not enabled_for_apparent:
+                use_defl_widget.setToolTip("Used only for apparent positions.")
+            else:
+                meta = self._meta_by_key.get("use_gravitational_deflection", {})
+                use_defl_widget.setToolTip(str(meta.get("description", "")))
 
     def _build_ui(self) -> None:
         outer_layout = QVBoxLayout(self)
