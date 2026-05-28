@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+    Release History
+    V4.8.6 - added call to drik.get_planet_speed_sign - to show show stationay/retrograde planets
+"""
+"""
     TODO: Check use of julian_day vs julian_years if used consistently
     For example: Special Lagna/Ascendant Calculations require jd_years or years/months/60hrs and new tob
 """
@@ -236,7 +240,6 @@ class Horoscope():
                                                 bhava_madhya_method=bhaava_madhya_method,
                                                 chart_method=chart_method, base_rasi=base_rasi,
                                                 count_from_end_of_sign=count_from_end_of_sign)
-        retrograde_planets = drik.planets_in_retrograde(jd, place)
         h = 1; planet_separator = '\n'
         for br,(bs,bm,be),pls in _bhava_info:
             key = cal_key_list['house_str']+'-'+str(h)
@@ -252,7 +255,7 @@ class Horoscope():
                     _bhava_ascendant_house = br
                 else:
                     p1 = int(p)
-                    retStr=const._retrogade_symbol if p1 in retrograde_planets else ''
+                    retStr = drik.get_planet_speed_sign(jd, place, p1)
                     ps += utils.PLANET_SHORT_NAMES[p1]+retStr+planet_separator
                     planet_name = utils.PLANET_NAMES[p1]+retStr
                     _bhava_chart[br] += planet_name + "\n"
@@ -425,13 +428,9 @@ class Horoscope():
                                               months=self.months, sixty_hours=self.sixty_hours,
                                               calculation_type=self.calculation_type, pravesha_type=self.pravesha_type,
                                               dhasa_progression_correction=dhasa_progression_correction)
-        retrograde_planets = drik.planets_in_retrograde(jd, place)
         for p,(h,long) in planet_positions[1:]:
-            ret_str = ''
-            if p in retrograde_planets:
-                ret_str = const._retrogade_symbol
-            planet_name = utils.PLANET_NAMES[p]+ret_str
-            #print('dhasavarga_factor',dhasavarga_factor,'planet_name',planet_name)
+            retStr = drik.get_planet_speed_sign(jd, place, p)
+            planet_name = utils.PLANET_NAMES[p]+retStr
             k = key_dhasa_factor+'-'+planet_name
             planet_house = h
             ck_str = ''
@@ -635,12 +634,9 @@ class Horoscope():
             utils.RAASI_LIST[ascendant_navamsa[0]]+' '+utils.to_dms(ascendant_navamsa[1],True,'plong')
         chara_karaka_names = [x+'_str' for x in house.chara_karaka_names]
         chara_karaka_dict = house.chara_karakas(planet_positions)
-        retrograde_planets = drik.planets_in_retrograde(jd, place)
         for p,(h,long) in planet_positions[1:]:
-            ret_str = ''
-            if p in retrograde_planets:
-                ret_str = const._retrogade_symbol
-            planet_name = utils.PLANET_NAMES[p]+ret_str
+            retStr = drik.get_planet_speed_sign(jd, place, p)
+            planet_name = utils.PLANET_NAMES[p]+retStr
             #print('dhasavarga_factor',dhasavarga_factor,'planet_name',planet_name)
             k = key_dhasa_factor+'-'+planet_name
             planet_house = h
@@ -731,8 +727,6 @@ class Horoscope():
             planet_positions = charts.rasi_chart(jd, place, years=self.years,months=self.months,
                                                  sixty_hours=self.sixty_hours,pravesha_type=self.pravesha_type)
         #retrograde_planets = charts.planets_in_retrograde(planet_positions)
-        retrograde_planets = drik.planets_in_retrograde(jd, place)
-        #print('rasi retrograde planets',retrograde_planets)
         _ascendant = planet_positions[0][1] #drik.ascendant(jd,place)
         horoscope_charts = [[ ''  for _ in range(len(utils.RAASI_LIST))] for _ in range(len(dhasavarga_dict)+1)]
         horoscope_ascendant_houses = [-1 for _ in range(len(const.division_chart_factors))]
@@ -805,10 +799,8 @@ class Horoscope():
         chara_karaka_names = [x+'_str' for x in house.chara_karaka_names]
         chara_karaka_dict = house.chara_karakas(planet_positions)
         for p,(h,long) in planet_positions[1:]:
-            ret_str = ''
-            if p in retrograde_planets:
-                ret_str = const._retrogade_symbol
-            planet_name = utils.PLANET_NAMES[p]+ret_str
+            retStr = drik.get_planet_speed_sign(jd, place, p)
+            planet_name = utils.PLANET_NAMES[p]+retStr
             k = cal_key_list['raasi_str']+'-'+planet_name
             ck_str = ''
             if p !='L' and p < 8:
@@ -910,10 +902,8 @@ class Horoscope():
             horoscope_info[dhasavarga_dict[dhasavarga_factor] +'-'+cal_key_list['ascendant_str']] = \
                 utils.RAASI_LIST[ascendant_navamsa[0]]+' '+utils.to_dms(ascendant_navamsa[1],True,'plong')
             for p,(h,long) in planet_positions[1:]:
-                ret_str = ''
-                if p in retrograde_planets:
-                    ret_str = const._retrogade_symbol
-                planet_name = utils.PLANET_NAMES[p]+ret_str
+                retStr = drik.get_planet_speed_sign(jd, place, p)
+                planet_name = utils.PLANET_NAMES[p]+retStr
                 #print('dhasavarga_factor',dhasavarga_factor,'planet_name',planet_name)
                 k = dhasavarga_dict[dhasavarga_factor]+'-'+planet_name
                 planet_house = h
