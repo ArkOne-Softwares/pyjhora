@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-# py -- routines for computing tithi, vara, etc.
-#
-# Copyright (C) 2013 Satish BD  <bdsatish@gmail.com>
-# Downloaded from https://github.com/bdsatish/drik-panchanga
-#
-# This file is part of the "drik-panchanga" Python library
-# for computing Hindu luni-solar calendar based on the Swiss ephemeris
+# Copyright (C) Open Astro Technologies, USA.
+# Modified by Sundar Sundaresan, USA. carnaticmusicguru2015@comcast.net
+# Downloaded from https://github.com/naturalstupid/PyJHora
+
+# This file is part of the "PyJHora" Python library
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -20,9 +18,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# Copyright (C) Open Astro Technologies, USA.
-# Modified by Sundar Sundaresan, USA. carnaticmusicguru2015@comcast.net
-# Downloaded from https://github.com/naturalstupid/PyJHora
+"""
+    Release History:
+    V4.8.6 - Moved hardcoded settings from this file to factory/user settings
+"""
 from __future__ import annotations
 
 import copy
