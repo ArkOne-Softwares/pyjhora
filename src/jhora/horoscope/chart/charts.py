@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+    Release History:
+    V4.8.6 - utils.count_rasis dir argument changed to direction
+"""
+"""
     TODO: Custom Divisional Chart with following options:
     Cyclic or not (Cyclic/Parivritti) => First N parts in Ar and 2nd N to Ta etc
     For Non-cyclic - add following options:
@@ -1661,14 +1665,14 @@ def _varnada_lagna_jha_pandey_mixed_chart(dob,tob, place,house_index=1,varga_fac
     asc_long = lagna*30+asc_long
     lagna_is_odd = lagna in const.odd_signs
     if not lagna_is_odd: asc_long = 360.-asc_long
-    count1 = utils.count_rasis(0,lagna,dir=1) if lagna_is_odd else utils.count_rasis(11,lagna,dir=-1)
+    count1 = utils.count_rasis(0,lagna,direction=1) if lagna_is_odd else utils.count_rasis(11,lagna,direction=-1)
     hora_sign,hora_long = drik.hora_lagna_mixed_chart(jd_at_dob,place, varga_factor_1, chart_method_1, varga_factor_2,
                                             chart_method_2,dhasa_progression_correction=dhasa_progression_correction)
     hora_lagna = (hora_sign+house_index-1)%12
     hora_long = hora_lagna*30+hora_long
     hora_lagna_is_odd = hora_lagna in const.odd_signs
     if not lagna_is_odd: hora_long = 360.-hora_long
-    count2 = utils.count_rasis(0,hora_lagna,dir=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,dir=-1)
+    count2 = utils.count_rasis(0,hora_lagna,direction=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,direction=-1)
     count = (count1 + count2)%12 if count1%2 == count2%2 else (max(count1,count2) - min (count1,count2))%12
     count_is_odd = count%2 != 0
     #print(lagna,lagna_is_odd,count1,hora_lagna,hora_lagna_is_odd,count2,count1%2!=0,count2%2!=0,count)
@@ -1689,14 +1693,14 @@ def _varnada_lagna_jha_pandey(dob,tob, place,house_index=1,divisional_chart_fact
     asc_long = lagna*30+asc_long
     lagna_is_odd = lagna in const.odd_signs
     if not lagna_is_odd: asc_long = 360.-asc_long
-    count1 = utils.count_rasis(0,lagna,dir=1) if lagna_is_odd else utils.count_rasis(11,lagna,dir=-1)
+    count1 = utils.count_rasis(0,lagna,direction=1) if lagna_is_odd else utils.count_rasis(11,lagna,direction=-1)
     hora_sign,hora_long = drik.hora_lagna(jd_at_dob,place,divisional_chart_factor=divisional_chart_factor,
                                 chart_method=chart_method,dhasa_progression_correction=dhasa_progression_correction)
     hora_lagna = (hora_sign+house_index-1)%12
     hora_long = hora_lagna*30+hora_long
     hora_lagna_is_odd = hora_lagna in const.odd_signs
     if not lagna_is_odd: hora_long = 360.-hora_long
-    count2 = utils.count_rasis(0,hora_lagna,dir=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,dir=-1)
+    count2 = utils.count_rasis(0,hora_lagna,direction=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,direction=-1)
     count = (count1 + count2)%12 if count1%2 == count2%2 else (max(count1,count2) - min (count1,count2))%12
     count_is_odd = count%2 != 0
     #print(lagna,lagna_is_odd,count1,hora_lagna,hora_lagna_is_odd,count2,count1%2!=0,count2%2!=0,count)
@@ -1792,14 +1796,14 @@ def _varnada_lagna_bv_raman_mixed_chart(dob,tob, place,house_index=1,varga_facto
                                    dhasa_progression_correction=dhasa_progression_correction)
     lagna = (planet_positions[0][1][0]+house_index-1)%12; asc_long = planet_positions[0][1][1]
     lagna_is_odd = lagna in const.odd_signs
-    count1 = utils.count_rasis(0,lagna,dir=1) if lagna_is_odd else utils.count_rasis(11,lagna,dir=-1)
+    count1 = utils.count_rasis(0,lagna,direction=1) if lagna_is_odd else utils.count_rasis(11,lagna,direction=-1)
     hora_lagna,_ = drik.hora_lagna_mixed_chart(jd_at_dob,place, varga_factor_1, chart_method_1, varga_factor_2,
                                             chart_method_2,dhasa_progression_correction=dhasa_progression_correction)
     hora_lagna = (hora_lagna+house_index-1)%12
     hora_lagna_is_odd = hora_lagna in const.odd_signs
-    count2 = utils.count_rasis(0,hora_lagna,dir=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,dir=-1)
+    count2 = utils.count_rasis(0,hora_lagna,direction=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,direction=-1)
     count = (count1 + count2)%12 if hora_lagna_is_odd == lagna_is_odd else (max(count1,count2) - min (count1,count2))%12
-    _varnada_lagna = utils.count_rasis(1,count,dir=1) if lagna_is_odd else utils.count_rasis(12,count,dir=-1)
+    _varnada_lagna = utils.count_rasis(1,count,direction=1) if lagna_is_odd else utils.count_rasis(12,count,direction=-1)
     _varnada_lagna -= 1 ## Keep in 0..11 range instead of 1..12
     return _varnada_lagna, asc_long #hl
 def _varnada_lagna_bv_raman(dob,tob,place,house_index=1,
@@ -1819,16 +1823,16 @@ def _varnada_lagna_bv_raman(dob,tob,place,house_index=1,
                                     dhasa_progression_correction=dhasa_progression_correction)
     lagna = (planet_positions[0][1][0]+house_index-1)%12; asc_long = planet_positions[0][1][1]
     lagna_is_odd = lagna in const.odd_signs
-    count1 = utils.count_rasis(0,lagna,dir=1) if lagna_is_odd else utils.count_rasis(11,lagna,dir=-1)
+    count1 = utils.count_rasis(0,lagna,direction=1) if lagna_is_odd else utils.count_rasis(11,lagna,direction=-1)
     hora_lagna,_ = drik.hora_lagna(jd_at_dob,place,divisional_chart_factor=divisional_chart_factor,
                                           chart_method=chart_method,
                                        base_rasi=base_rasi,count_from_end_of_sign=count_from_end_of_sign,
                                        dhasa_progression_correction=dhasa_progression_correction) # V3.1.9
     hora_lagna = (hora_lagna+house_index-1)%12
     hora_lagna_is_odd = hora_lagna in const.odd_signs
-    count2 = utils.count_rasis(0,hora_lagna,dir=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,dir=-1)
+    count2 = utils.count_rasis(0,hora_lagna,direction=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,direction=-1)
     count = (count1 + count2)%12 if hora_lagna_is_odd == lagna_is_odd else (max(count1,count2) - min (count1,count2))%12
-    _varnada_lagna = utils.count_rasis(1,count,dir=1) if lagna_is_odd else utils.count_rasis(12,count,dir=-1)
+    _varnada_lagna = utils.count_rasis(1,count,direction=1) if lagna_is_odd else utils.count_rasis(12,count,direction=-1)
     _varnada_lagna -= 1 ## Keep in 0..11 range instead of 1..12
     return _varnada_lagna, asc_long #hl
 def _varnada_lagna_santhanam_mixed_chart(dob,tob, place,house_index=1,varga_factor_1=1,chart_method_1=1,
@@ -1859,15 +1863,15 @@ def _varnada_lagna_sharma_mixed_chart(dob,tob, place,house_index=1,varga_factor_
                                    dhasa_progression_correction=dhasa_progression_correction)
     lagna = (planet_positions[0][1][0]+house_index-1)%12; asc_long = planet_positions[0][1][1]
     lagna_is_odd = lagna in const.odd_signs
-    count1 = utils.count_rasis(0,lagna,dir=1) if lagna_is_odd else utils.count_rasis(11,lagna,dir=-1)
+    count1 = utils.count_rasis(0,lagna,direction=1) if lagna_is_odd else utils.count_rasis(11,lagna,direction=-1)
     hora_lagna,_ = drik.hora_lagna_mixed_chart(jd_at_dob,place, varga_factor_1, chart_method_1, varga_factor_2,
                                         chart_method_2,dhasa_progression_correction=dhasa_progression_correction)
     hora_lagna = (hora_lagna+house_index-1)%12
     hora_lagna_is_odd = hora_lagna in const.odd_signs
-    count2 = utils.count_rasis(0,hora_lagna,dir=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,dir=-1)
+    count2 = utils.count_rasis(0,hora_lagna,direction=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,direction=-1)
     count = (count1 + count2)%12 if count1%2 == count2%2 else (max(count1,count2) - min (count1,count2))%12
     count_is_odd = count%2 != 0
-    _varnada_lagna = utils.count_rasis(1,count,dir=1) if count_is_odd else utils.count_rasis(12,count,dir=-1)
+    _varnada_lagna = utils.count_rasis(1,count,direction=1) if count_is_odd else utils.count_rasis(12,count,direction=-1)
     _varnada_lagna -= 1 ## Keep in 0..11 range instead of 1..12
     return _varnada_lagna, asc_long #hl
 def _varnada_lagna_sharma(dob,tob,place,house_index=1,divisional_chart_factor=1,chart_method=1,
@@ -1888,17 +1892,17 @@ def _varnada_lagna_sharma(dob,tob,place,house_index=1,divisional_chart_factor=1,
                                     dhasa_progression_correction=dhasa_progression_correction)
     lagna = (planet_positions[0][1][0]+house_index-1)%12; asc_long = planet_positions[0][1][1]
     lagna_is_odd = lagna in const.odd_signs
-    count1 = utils.count_rasis(0,lagna,dir=1) if lagna_is_odd else utils.count_rasis(11,lagna,dir=-1)
+    count1 = utils.count_rasis(0,lagna,direction=1) if lagna_is_odd else utils.count_rasis(11,lagna,direction=-1)
     hora_lagna,_ = drik.hora_lagna(jd_at_dob,place,divisional_chart_factor=divisional_chart_factor,
                                           chart_method=chart_method,base_rasi=base_rasi,
                                           count_from_end_of_sign=count_from_end_of_sign,
                                           dhasa_progression_correction=dhasa_progression_correction) # V3.1.9
     hora_lagna = (hora_lagna+house_index-1)%12
     hora_lagna_is_odd = hora_lagna in const.odd_signs
-    count2 = utils.count_rasis(0,hora_lagna,dir=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,dir=-1)
+    count2 = utils.count_rasis(0,hora_lagna,direction=1) if hora_lagna_is_odd else utils.count_rasis(11,hora_lagna,direction=-1)
     count = (count1 + count2)%12 if count1%2 == count2%2 else (max(count1,count2) - min (count1,count2))%12
     count_is_odd = count%2 != 0
-    _varnada_lagna = utils.count_rasis(1,count,dir=1) if count_is_odd else utils.count_rasis(12,count,dir=-1)
+    _varnada_lagna = utils.count_rasis(1,count,direction=1) if count_is_odd else utils.count_rasis(12,count,direction=-1)
     #print(count1,count2,count,count_is_odd,_varnada_lagna)
     _varnada_lagna -= 1 ## Keep in 0..11 range instead of 1..12
     return _varnada_lagna, asc_long #hl
