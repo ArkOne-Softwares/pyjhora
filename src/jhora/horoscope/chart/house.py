@@ -18,6 +18,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+    Release History:
+    V4.8.6 - Error in rudra(planet_positions) fixed.
+"""
 from jhora import const, utils
 from jhora.panchanga import drik
 chara_karaka_names = const.chara_karaka_names
@@ -999,25 +1003,16 @@ def marakas(h_to_p):
         maraka_planets += mpls
     maraka_planets = list(set(maraka_planets))
     return maraka_planets
-def rudra_based_on_planet_positions(dob,tob,place,divisional_chart_factor=1):
-    jd = utils.julian_day_number(dob, tob)
+def rudra_from_jd_place(jd,place,divisional_chart_factor=1):
+    """ 
+        Stronger of lord of the 8th house from (i) lagna and (ii) the 7th house - is Rudra
+        8th house calculated not the usual way but using const.rudra_eighth_house
+        Ref: Table-32 of PVR's Book.
+    """
     planet_positions = drik.dhasavarga(jd, place, divisional_chart_factor=divisional_chart_factor)
     ascendant_constellation, ascendant_longitude, _, _ = drik.ascendant(jd,place)
     planet_positions = [[const._ascendant_symbol,(ascendant_constellation, ascendant_longitude)]] + planet_positions
-    #print(planet_positions)
-    h_to_p = utils.get_house_planet_list_from_planet_positions(planet_positions)
-    p_to_h = utils.get_planet_to_house_dict_from_chart(h_to_p)
-    lagna_house = p_to_h['L']
-    eighth_house_lord = house_owner(h_to_p, const.rudra_eighth_house[(lagna_house+const.HOUSE_8)%12])
-    seventh_house_lord = house_owner(h_to_p, (lagna_house+const.HOUSE_7)%12)
-    eighth_house_lord_longitude = planet_positions[eighth_house_lord+1][1][1]
-    seventh_house_lord_longitude = planet_positions[seventh_house_lord+1][1][1]
-    #print('eighth_house_lord',eighth_house_lord,eighth_house_lord_longitude,'seventh_house_lord',seventh_house_lord,seventh_house_lord_longitude)
-    #_rudra = stronger_planet(h_to_p, eighth_house_lord, seventh_house_lord, False, eighth_house_lord_longitude, seventh_house_lord_longitude)
-    _rudra = stronger_planet_from_planet_positions(planet_positions, eighth_house_lord, seventh_house_lord, check_during_dhasa=False)
-    _rudra_sign = p_to_h[_rudra]
-    trishoola_rasis = trines_of_the_raasi(_rudra_sign)
-    return _rudra, _rudra_sign,trishoola_rasis
+    return rudra(planet_positions)
 def brahma(planet_positions):
     p_to_h = utils.get_planet_house_dictionary_from_planet_positions(planet_positions)
     asc_house = planet_positions[0][1][0]
@@ -1046,20 +1041,20 @@ def brahma(planet_positions):
         brahma = stronger_planet_from_planet_positions(planet_positions, list(lords_scores.keys())[0], list(lords_scores.keys())[1])
     else:
         b1 = stronger_planet_from_planet_positions(planet_positions, list(lords_scores.keys())[0], list(lords_scores.keys())[1])
-        brahma = stronger_planet_from_planet_positions(planet_positions, brahma, list(lords_scores.keys())[2])
+        brahma = stronger_planet_from_planet_positions(planet_positions, b1, list(lords_scores.keys())[2])
     return brahma
 def rudra(planet_positions):
-    """ Stronger of lord of the 8th house from (i) lagna and (ii) the 7th house - is Rudra """
+    """ 
+        Stronger of lord of the 8th house from (i) lagna and (ii) the 7th house - is Rudra
+        8th house calculated not the usual way but using const.rudra_eighth_house
+        Ref: Table-32 of PVR's Book.
+    """
     p_to_h = utils.get_planet_house_dictionary_from_planet_positions(planet_positions)
-    h_to_p = utils.get_house_planet_list_from_planet_positions(planet_positions)
-    lagna_house = p_to_h[const._ascendant_symbol]
-    #print('lagna_house',rasi_names_en[lagna_house])
-    eighth_house_lord = house_owner(h_to_p, const.rudra_eighth_house[lagna_house])
-    #print('8th Rudra house',rasi_names_en[const.rudra_eighth_house[lagna_house]],'8th rudra lord',planet_list[eighth_house_lord])
-    seventh_house_lord = house_owner(h_to_p, const.rudra_eighth_house[(lagna_house+const.HOUSE_7)%12]) #8th house of 7th house from Lagna
-    #print('7th house',rasi_names_en[const.rudra_eighth_house[(lagna_house+6)%12]],'7th house lord',planet_list[seventh_house_lord])
-    _rudra = stronger_planet_from_planet_positions(planet_positions, eighth_house_lord, seventh_house_lord)
-    #print('Stronger of ',planet_list[eighth_house_lord],'and',planet_list[seventh_house_lord],'is',planet_list[_rudra])
+    lagna_house = p_to_h['L']
+    eighth_house_lord = house_owner_from_planet_positions(planet_positions, const.rudra_eighth_house[lagna_house])
+    seventh_house = (lagna_house+const.HOUSE_7)%12
+    seventh_house_lord = house_owner_from_planet_positions(planet_positions, const.rudra_eighth_house[seventh_house])
+    _rudra = stronger_planet_from_planet_positions(planet_positions, eighth_house_lord, seventh_house_lord, check_during_dhasa=False)
     _rudra_sign = p_to_h[_rudra]
     trishoola_rasis = trines_of_the_raasi(_rudra_sign)
     return _rudra, _rudra_sign,trishoola_rasis
@@ -1365,11 +1360,15 @@ def planets_in_the_house(raasi,planet_to_house_dict=None,chart_1d=None,planet_po
     return _pir
 if __name__ == "__main__":
     utils.set_language('en')
-    dob = (1996,12,7); tob = (10,34,0);place_as_tuple = drik.Place('Chennai, India',13.0878,80.2785,5.5)
+    dob = (2026,5,23); tob = (8,34,0);place_as_tuple = drik.Place('Chennai, India',13.0878,80.2785,5.5)
     dcf = 1
     jd_at_dob = utils.julian_day_number(dob, tob)
     from jhora.horoscope.chart.charts import divisional_chart
-    planet_positions = divisional_chart(jd_at_dob, place_as_tuple, divisional_chart_factor=dcf,chart_method=dcf)
+    for d in range(365):
+        planet_positions = divisional_chart(jd_at_dob, place_as_tuple, divisional_chart_factor=dcf,chart_method=dcf)
+        print(utils.jd_to_gregorian(jd_at_dob),rudra(planet_positions))
+        jd_at_dob += 1
+    exit()
     _quads = [quadrants_of_the_raasi((planet_positions[0][1][0]+h)%12) for h in range(3)]
     _quads1 = _quads[0]+sorted(_quads[1])+sorted(_quads[2])
     print(_quads1)
