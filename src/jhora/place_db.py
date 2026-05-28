@@ -1,3 +1,27 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+# Copyright (C) Open Astro Technologies, USA.
+# Modified by Sundar Sundaresan, USA. carnaticmusicguru2015@comcast.net
+# Downloaded from https://github.com/naturalstupid/PyJHora
+
+# This file is part of the "PyJHora" Python library
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+    Release History:
+    V4.8.6 - Added CSV/Pickle/SQLite config for 1K, 1K_IN, 10K, 10K_IN.
+"""
 import csv
 import os
 import pickle
@@ -9,8 +33,12 @@ import shutil
 import urllib.request
 import urllib.error
 from dataclasses import dataclass, field
-
 from jhora import const
+"""
+    Release History:
+    V4.8.6 - Moved hardcoded settings from this file to factory/user settings
+"""
+
 _ENGINE_DISPLAY_LABELS = {
     "NONE": "NONE",
 
@@ -62,6 +90,18 @@ _DOWNLOADABLE_ENGINES = {
     const.PLACE_DATABASE_ENGINE.CSV_500_IN,
     const.PLACE_DATABASE_ENGINE.PICKLE_500_IN,
     const.PLACE_DATABASE_ENGINE.SQLITE_500_IN,
+    const.PLACE_DATABASE_ENGINE.CSV_1K,
+    const.PLACE_DATABASE_ENGINE.PICKLE_1K,
+    const.PLACE_DATABASE_ENGINE.SQLITE_1K,
+    const.PLACE_DATABASE_ENGINE.CSV_1K_IN,
+    const.PLACE_DATABASE_ENGINE.PICKLE_1K_IN,
+    const.PLACE_DATABASE_ENGINE.SQLITE_1K_IN,
+    const.PLACE_DATABASE_ENGINE.CSV_10K,
+    const.PLACE_DATABASE_ENGINE.PICKLE_10K,
+    const.PLACE_DATABASE_ENGINE.SQLITE_10K,
+    const.PLACE_DATABASE_ENGINE.CSV_10K_IN,
+    const.PLACE_DATABASE_ENGINE.PICKLE_10K_IN,
+    const.PLACE_DATABASE_ENGINE.SQLITE_10K_IN,
 }
 
 # Auto-download behavior
@@ -204,21 +244,35 @@ def _csv_enabled() -> bool:
         const.PLACE_DATABASE_ENGINE.CSV_5K_IN,
         const.PLACE_DATABASE_ENGINE.CSV_500,
         const.PLACE_DATABASE_ENGINE.CSV_500_IN,
+        const.PLACE_DATABASE_ENGINE.CSV_1K,
+        const.PLACE_DATABASE_ENGINE.CSV_1K_IN,
+        const.PLACE_DATABASE_ENGINE.CSV_10K,
+        const.PLACE_DATABASE_ENGINE.CSV_10K_IN,
     )
 
 
 def _pickle_enabled() -> bool:
     return _current_engine() in (
         const.PLACE_DATABASE_ENGINE.PICKLE_5K,
+        const.PLACE_DATABASE_ENGINE.PICKLE_5K_IN,
         const.PLACE_DATABASE_ENGINE.PICKLE_500,
-        const.PLACE_DATABASE_ENGINE.PICKLE_500_IN
+        const.PLACE_DATABASE_ENGINE.PICKLE_500_IN,
+        const.PLACE_DATABASE_ENGINE.PICKLE_1K,
+        const.PLACE_DATABASE_ENGINE.PICKLE_1K_IN,
+        const.PLACE_DATABASE_ENGINE.PICKLE_10K,
+        const.PLACE_DATABASE_ENGINE.PICKLE_10K_IN,
     )
 
 def _sqlite_enabled() -> bool:
     return _current_engine() in (
         const.PLACE_DATABASE_ENGINE.SQLITE_5K,
+        const.PLACE_DATABASE_ENGINE.SQLITE_5K_IN,
         const.PLACE_DATABASE_ENGINE.SQLITE_500,
-        const.PLACE_DATABASE_ENGINE.SQLITE_500_IN
+        const.PLACE_DATABASE_ENGINE.SQLITE_500_IN,
+        const.PLACE_DATABASE_ENGINE.SQLITE_1K,
+        const.PLACE_DATABASE_ENGINE.SQLITE_1K_IN,
+        const.PLACE_DATABASE_ENGINE.SQLITE_10K,
+        const.PLACE_DATABASE_ENGINE.SQLITE_10K_IN,
     )
 
 def _split_display_and_lookup_text(place_name):
