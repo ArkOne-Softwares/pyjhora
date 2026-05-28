@@ -281,6 +281,7 @@ class ChartTabbed(QWidget):
             @param language: One of 'English','Hindi','Tamil','Telugu','Kannada'; Default:English
             @param gender: 0='Female',1='Male',2='Transgender',3='No preference'; Default=0
         """
+        start_time = time.time()
         super().__init__()
         self._options_epoch = 0
         if use_world_city_database is None: use_world_city_database = const.check_database_for_world_cities
@@ -296,6 +297,7 @@ class ChartTabbed(QWidget):
         self._language = const.reverse_languages[const._DEFAULT_LANGUAGE] if language is None else language
         utils.set_language(available_languages[self._language])
         utils.use_database_for_world_cities(use_world_city_database)
+        print('end load place engine', time.time() - start_time)
         self.resources = utils.resource_strings
         self._place_name = place_of_birth
         self._elevation = 0.0
@@ -410,7 +412,7 @@ class ChartTabbed(QWidget):
         try:
             dlg = ConfigDialog(mode="both", parent=self)
             result = dlg.exec()
-    
+            self._configuration_changed = result
             if result == QDialog.DialogCode.Accepted:
                 # bump local cache epoch
                 self._options_epoch += 1
@@ -2921,6 +2923,7 @@ class ChartTabbed(QWidget):
         self._options_button = QPushButton(self.resources['options_str'])
         self._options_button.setFont(QtGui.QFont("Arial Bold", 9))
         self._options_button.clicked.connect(self._open_options_dialog)
+        self._configuration_changed = False
         self._options_button.setToolTip(self.resources['options_str'])
         self._row3_h_layout.addWidget(self._options_button)
 
@@ -3674,7 +3677,6 @@ class ChartTabbed(QWidget):
                 return
             self._profiler.mark("validate_ui")
 
-            config.initialize_runtime(force_reload=True, silent=False)
             self._dhasa_result_cache.clear()
             self._pps_dirty = True
             self._dhasa_dirty = True
@@ -3684,6 +3686,8 @@ class ChartTabbed(QWidget):
             self._place_name = self._place_text.text()
             self._latitude = float(self._lat_text.text())
             self._longitude = float(self._long_text.text())
+            config.initialize_runtime(force_reload=True, silent=False)
+            drik.refresh_planet_flags(self._longitude,self._latitude,self._elevation)
             self._language = const.reverse_languages[const._DEFAULT_LANGUAGE]
             year, month, day = self._dob_text.text().split(",")
             birth_date = drik.Date(int(year), int(month), int(day))
@@ -3898,6 +3902,9 @@ class ChartTabbed(QWidget):
             self.tabWidget.setFocus()
             self._profiler.mark("tabWidget.setFocus")
 
+        except Exception as e:
+            utils.show_exception(e)
+            print("Exception in horo_chart_tabs compute_horoscope:",e)
         finally:
             self._profiler.end()
             end_time = datetime.now()
@@ -7016,8 +7023,8 @@ class ChartTabbed(QWidget):
         planet_lang_dict[last_key] = const._ascendant_symbol
         for k,v in planet_lang_dict.items():
             for i,house in enumerate(rasi_1d_en):
-                if k in house:
-                    rasi_1d_en[i] = rasi_1d_en[i].replace(k,v).replace(const._retrogade_symbol,'')
+                if k in house: # V4.8.6 Remove stationary symbol if present
+                    rasi_1d_en[i] = rasi_1d_en[i].replace(k,v).replace(const._stationary_symbol,'').replace(k,v).replace(const._retrogade_symbol,'')
         return rasi_1d_en
 def show_horoscope(data):
     """
