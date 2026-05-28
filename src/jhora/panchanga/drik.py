@@ -27,6 +27,12 @@
     To calculate panchanga/calendar elements such as tithi, nakshatra, etc.
     Uses swiss ephemeris
 """
+"""
+    Release History:
+    V4.8.6 - get_planet_speed_sign, planets_in_stationary and next_planet_stationary_duration
+            added to getting stationary planets. 
+            next_planet_retrograde_change_date updated
+"""
 from math import ceil
 from collections import namedtuple as struct
 import swisseph as swe
@@ -117,6 +123,13 @@ _tropical_planet_list = {const._SUN:const.SUN_ID,const._MOON:const.MOON_ID,const
 # They are geometric, i.e. "true sunrise/set", so refraction is not considered
 _rise_flags = swe.BIT_HINDU_RISING | swe.FLG_TRUEPOS | swe.FLG_SPEED # V3.2.3 # Speed flag added for retrogression
 PLANET_FLAGS = utils.set_flags_for_planet_positions()
+def refresh_planet_flags(longitude,latitude,elevation):
+    global PLANET_FLAGS
+    PLANET_FLAGS = utils.set_flags_for_planet_positions()
+
+    if PLANET_FLAGS & swe.FLG_TOPOCTR:
+        swe.set_topo(longitude,latitude,elevation)
+
 RISE_FLAGS = utils.set_flags_for_rise_set(flags_for_rise=True)
 SET_FLAGS = utils.set_flags_for_rise_set(flags_for_rise=False)
 def set_tropical_planets():
@@ -268,6 +281,16 @@ def nakshatra_pada(longitude):
 def ephemeris_planet_index(planet):
     if planet == const._ascendant_symbol: return planet
     return [p_swe for p_swe,p_id in planet_list.items() if p_id==planet][0]
+def _planet_speed_sign(jd, place, planet):  # V4.8.6
+    speed_tolerance = const.one_arc_second
+    dsp = daily_planet_speed(jd, place, planet)
+    if dsp > speed_tolerance:
+        return 1
+    elif dsp < -speed_tolerance:
+        return -1
+    else:
+        return 0
+
 def sidereal_longitude(jd_utc, planet):
     """
         The sequence number of 0 to 8 for planets is not followed by swiss ephemeris
@@ -285,7 +308,7 @@ def sidereal_longitude(jd_utc, planet):
         @return: the sidereal longitude of the planet (0-360 degrees)
     """
     if const._TROPICAL_MODE:
-        flags = swe.FLG_SWIEPH
+        flags = swe.FLG_SWIEPH + swe.FLG_SPEED
     else:
         flags = PLANET_FLAGS #swe.FLG_SWIEPH | swe.FLG_SIDEREAL | _rise_flags
     if planet == const._KETU:
@@ -314,6 +337,22 @@ def planets_in_retrograde(jd,place):
         longi,_ = swe.calc_ut(jd_utc, planet, flags = flags)
         if longi[3]<0 : retro_planets.append(p_id)
     return retro_planets
+def planets_in_stationary(jd,place,zero_threshold=0.01): # V4.8.6
+    """
+        To get the list of stationary planets
+        @param jd: julian day number (not UTC)
+        @param place: Place as struct ('Place',latitude,longitude,timezone)
+        @return: list of retrograding planets e.g. [3,5]
+    """
+    global planet_list
+    jd_utc = jd - place.timezone / 24.
+    flags = PLANET_FLAGS # swe.FLG_SWIEPH | swe.FLG_SIDEREAL | _rise_flags
+    zero_planets = []
+    _planet_list = {p:p_id for p,p_id in planet_list.items() if p not in [const._RAHU, const._KETU]}
+    for planet,p_id in _planet_list.items():
+        longi,_ = swe.calc_ut(jd_utc, planet, flags = flags)
+        if abs(longi[3])<zero_threshold : zero_planets.append(p_id)
+    return zero_planets
 def _planet_speed_info(jd, place,planet):
     """ 
         JD (not UTC)
@@ -1664,7 +1703,7 @@ def dasavarga_from_long(longitude, divisional_chart_factor=1):
     constellation = int(fraction_left * 12)
     long_in_raasi = (longitude-(constellation*30)) % 30
     " if long_in_raasi 30 make it and zero and add a rasi"
-    if int(long_in_raasi+const.one_second_lontitude_in_degrees) == 30:
+    if int(long_in_raasi+const.one_arc_second) == 30:
         long_in_raasi = 0; constellation = (constellation+1)%12
     return constellation,long_in_raasi
 
@@ -3023,7 +3062,65 @@ def next_planet_entry_date(planet,jd,place,direction=1,increment_days=0.01,preci
     planet_long = sidereal_longitude(sank_jd_utc-place.timezone/24,pl)
     y,m,d,fh = jd_to_gregorian(sank_jd_utc); sank_date = Date(y,m,d); planet_hour1 = fh
     return sank_jd_utc,planet_long
-def next_planet_retrograde_change_date(planet,panchanga_date,place,increment_days=1,direction=1):
+def next_planet_retrograde_change_date(planet, panchanga_date, place, increment_days=1, direction=1):
+    """
+        get the date when a retrograde planet changes its direction
+        @param planet: planet index (0=Sun..8=Kethu)
+        @param panchanga_date: Date struct (y,m,d)
+        @param panchanga_place: Place struct ('place',latitude,longitude,timezone)
+        @param increment_days: incremental steps in days algorithm to check for entry (Default=1 day)
+        @param direction: 1= next direction change, -1 previous direction change
+        @return Julian day number of planet changes retrograde direction
+    """
+    if planet not in [*range(const.MARS_ID, const.RAHU_ID)]:
+        print(planet, "is not a retrograding planet")
+        return
+
+    jd = utils.gregorian_to_jd(panchanga_date)
+
+    sl_sign = _planet_speed_sign(jd, place, planet)
+
+    # if starting point itself is stationary, move until a definite direction is found
+    while sl_sign == 0:
+        jd += increment_days * direction
+        sl_sign = _planet_speed_sign(jd, place, planet)
+
+    sl_sign_next = sl_sign
+
+    # coarse search: ignore stationary (0), stop only when opposite nonzero sign is found
+    while True:
+        jd += increment_days * direction
+        sl_sign_next = _planet_speed_sign(jd, place, planet)
+
+        if sl_sign_next == 0:
+            continue
+
+        if sl_sign_next == sl_sign:
+            continue
+
+        break
+
+    # go back to previous coarse point
+    jd -= increment_days * direction
+
+    # refine with smaller step
+    increment_days = const.conjunction_increment
+    sl_sign_next = sl_sign
+
+    while True:
+        jd += increment_days * direction
+        sl_sign_next = _planet_speed_sign(jd, place, planet)
+
+        if sl_sign_next == 0:
+            continue
+
+        if sl_sign_next == sl_sign:
+            continue
+
+        break
+
+    return jd, sl_sign_next
+def _next_planet_retrograde_change_date(planet,panchanga_date,place,increment_days=1,direction=1):
     """
         get the date when a retrograde planet changes its direction
         @param planet: planet index (0=Sun..8=Kethu)
@@ -3033,9 +3130,7 @@ def next_planet_retrograde_change_date(planet,panchanga_date,place,increment_day
         @param direction: 1= next direction change, -1 previous direction change
         @return Julian day number of planet changes retrogade direction
     """
-    def _planet_speed_sign(jd,place,planet):
-        return 1 if daily_planet_speed(jd,place,planet) > 0 else -1
-    if planet not in [*range(const.MARS_ID,const.RAHU_ID)]:
+    if planet in [const.SUN_ID, const.MOON_ID,const.RAHU_ID,const.KETU_ID]:
         print(planet,"is not a retrograding planet")
         return 
     jd = utils.gregorian_to_jd(panchanga_date)
@@ -3043,25 +3138,76 @@ def next_planet_retrograde_change_date(planet,panchanga_date,place,increment_day
     while sl_sign == sl_sign_next:
         jd += increment_days*direction
         sl_sign_next = _planet_speed_sign(jd,place,planet)
-    jd -= 1*direction; increment_days=const.conjunction_increment; sl_sign_next=sl_sign
+    jd -= increment_days*direction; increment_days=const.conjunction_increment; sl_sign_next=sl_sign
     while sl_sign == sl_sign_next:
         jd += increment_days*direction
         sl_sign_next = _planet_speed_sign(jd,place,planet)
     return jd,sl_sign_next
-def _get_stationary_duration(planet, change_jd, place, threshold=0.01):
+def next_planet_stationary_duration(
+    planet,
+    current_jd,
+    place,
+    threshold=const.one_arc_second,
+    direction=1,
+    step=0.01,
+):
     """
-    Finds the start and end Julian Days where a planet's speed is effectively zero.
-    @param threshold: Speed in degrees/day below which planet is 'stationary'
+    Find a stationary interval relative to current_jd.
+
+    direction:
+        +1 -> return the next stationary interval whose start_jd > current_jd
+        -1 -> return the stationary interval whose start_jd < current_jd;
+              if already inside a stationary interval, return the current one
+
+    threshold:
+        Speed in degrees/day below which the planet is considered stationary.
     """
-    start_jd = change_jd
-    while abs(daily_planet_speed(start_jd, place, planet)) < threshold:
-        start_jd -= 0.01 # Checking in 0.1 day increments for precision
-    print(daily_planet_speed(start_jd,place,planet))
-    end_jd = change_jd
-    while abs(daily_planet_speed(end_jd, place, planet)) < threshold:
-        end_jd += 0.01
-    print(daily_planet_speed(end_jd,place,planet))
-    return start_jd, end_jd
+
+    if direction not in (+1, -1):
+        raise ValueError("direction must be +1 or -1")
+
+    def is_stationary(jd_):
+        return abs(daily_planet_speed(jd_, place, planet)) < threshold
+
+    def get_stationary_interval_containing(jd_):
+        start_jd = jd_
+        while is_stationary(start_jd):
+            start_jd -= step
+
+        end_jd = jd_
+        while is_stationary(end_jd):
+            end_jd += step
+        _interval = start_jd + step, end_jd - step
+        return _interval
+
+    # --------------------------------------------------
+    # If already inside a stationary interval:
+    #   direction = -1 -> return current interval
+    #   direction = +1 -> skip current interval and find next
+    # --------------------------------------------------
+    if is_stationary(current_jd):
+        current_start, current_end = get_stationary_interval_containing(current_jd)
+
+        if direction == -1:
+            return current_start, current_end
+
+        # direction == +1
+        jd = current_end + step
+        while not is_stationary(jd):
+            jd += step
+        _sjd1,_sjd2 = get_stationary_interval_containing(jd)
+        return utils.jd_to_gregorian(_sjd1), utils.jd_to_gregorian(_sjd2)
+
+    # --------------------------------------------------
+    # Not currently stationary:
+    # search in requested direction until entering one
+    # --------------------------------------------------
+    jd = current_jd
+    while not is_stationary(jd):
+        jd += direction * step
+
+    _sjd1,_sjd2 = get_stationary_interval_containing(jd)
+    return utils.jd_to_gregorian(_sjd1), utils.jd_to_gregorian(_sjd2)
 def _nisheka_time(jd,place):
     """
         @param jd: Julian number 
@@ -3073,9 +3219,10 @@ def _nisheka_time(jd,place):
     y,m,d,fh = utils.jd_to_gregorian(jd); dob = Date(y,m,d); tob = utils.to_dms(fh,as_string=False)
     from jhora.horoscope.chart.charts import rasi_chart
     pp = rasi_chart(jd,place)
-    sat_long = pp[7][1][0]*30+pp[7][1][1];moon_long=pp[2][1][0]*30+pp[2][1][1]
+    sat_long = pp[const.SATURN_ID+1][1][0]*30+pp[7][1][1]
+    moon_long=pp[const.MOON_ID+1][1][0]*30+pp[2][1][1]
     lagna_long = pp[0][1][0]*30+pp[0][1][1]
-    ninth_house_long = (240+lagna_long+15)%360
+    ninth_house_long = (const.HOUSE_9*30+lagna_long+15)%360
     gl = gulika_longitude(dob,tob,place); gulika_long = gl[0]*30+gl[1]
     ml = maandi_longitude(dob,tob,place); maandi_long = ml[0]*30+ml[1]
     a = 0.5*( (sat_long-gulika_long)%30 + ((sat_long-maandi_long)%30) ); b = (ninth_house_long-lagna_long)%360
@@ -4195,6 +4342,14 @@ def dhasa_year_duration(dhasa_duration_type=None,jd=None,place=None,round_to_dig
         return const.average_gregorian_year
     else: return const.sidereal_year
 
+def get_planet_speed_sign(jd,place,planet): # V4.8.6 
+    """
+        Get Planet Speed Sign if retrograde "R" if Stationary "S" otherwise ""
+    """
+    return (
+        const.ret_stat_symbols[_planet_speed_sign(jd, place, planet)] 
+        if planet not in [const.RAHU_ID,const.KETU_ID] else '' )
+
     
 if __name__ == "__main__":
     import time
@@ -4205,6 +4360,22 @@ if __name__ == "__main__":
     set_planet_list(True)
     dcf = 1; dob = Date(1996,12,7); tob = (10,34,0); place = Place('Chennai,India',13.0878,80.2785,5.5)
     jd = utils.julian_day_number(dob, tob)
-    from jhora.config import initialize_runtime
-    initialize_runtime()
-    print(const.bhaava_madhya_method,bhaava_madhya(jd, place))
+    planet = const.SATURN_ID
+    npr,rs = next_planet_retrograde_change_date(planet, Date(dob[0],dob[1],dob[2]), place)
+    pstr = utils.PLANET_NAMES[planet]
+    if rs<0: pstr += const._retrogade_symbol
+    print(utils.jd_to_gregorian(npr),pstr)
+    sjd1,sjd2 = next_planet_stationary_duration(planet, jd, place,direction=-1)
+    y1,m1,d1,fh1 = sjd1; jd1 = utils.julian_day_number(Date(y1,m1,d1),(fh1,0,0))
+    print((y1,m1,d1),utils.to_dms(fh1))
+    y2,m2,d2,fh2 = sjd2; jd2 = utils.julian_day_number(Date(y2,m2,d2),(fh2,0,0))
+    print((y2,m2,d2),utils.to_dms(fh2))
+    jd = 0.5*(jd1+jd2)
+    print(utils.jd_to_gregorian(jd))
+    jd_utc = jd-place.timezone/24.0
+    for planet,p_id in planet_list.items():
+        retStr = const.ret_stat_symbols[_planet_speed_sign(jd, place, p_id)]
+        p_long = sidereal_longitude(jd_utc,planet)
+        pstr = utils.PLANET_NAMES[p_id]+retStr
+        print(pstr,utils.deg_to_sign_str(p_long))
+    
