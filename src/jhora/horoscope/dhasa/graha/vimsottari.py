@@ -187,6 +187,7 @@ def get_vimsottari_dhasa_bhukthi(
     RETURNS (for ALL levels 1..6):
         (vim_balance, [ (lords_tuple), (Y, M, D, fractional_hour), duration_years_float ])
     """
+    utils.validate_star_index(seed_star)
     global human_life_span_for_vimsottari_dhasa, vimsottari_dict, year_duration
 
     if not (1 <= dhasa_level_index <= 6):
@@ -592,6 +593,7 @@ def nakshathra_dhasa_progression(
         For nakshathra dhasa calculations for divisional charts - first calculate progression for raasi
         Then do varga division to progressed raasi longitudes
     """
+    utils.validate_star_index(seed_star)
     DLI = dhasa_level_index
     _, vd = get_vimsottari_dhasa_bhukthi(
         jd_at_dob,

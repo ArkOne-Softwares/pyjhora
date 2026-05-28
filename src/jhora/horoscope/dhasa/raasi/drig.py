@@ -478,7 +478,7 @@ def _expand_equal_12(rows: List[Tuple],
 # =============================================================================
 def get_dhasa_antardhasa(jd: float,
                          place,
-                         dhasa_method=const.DRIG_TYPE.PVR_PAPER,
+                         dhasa_method=None,
                          divisional_chart_factor: int = 1,
                          chart_method: int = 1,
                          dhasa_duration_type=None,
@@ -493,6 +493,7 @@ def get_dhasa_antardhasa(jd: float,
       round_duration: bool (default True)
       any kwargs passed to charts.divisional_chart(...)
     """
+    if dhasa_method is None: dhasa_method = const.DRIG_TYPE_DEFAULT
     _set_year_duration(jd, place, dhasa_duration_type=dhasa_duration_type, savana_year_method=savana_year_method)
 
     dhasa_level_index = int(kwargs.pop("dhasa_level_index", int(const.MAHA_DHASA_DEPTH.ANTARA)))
@@ -570,7 +571,7 @@ def drig_immediate_children(
     *,
     jd_at_dob: float,
     place,
-    dhasa_method=const.DRIG_TYPE.PVR_PAPER,
+    dhasa_method=None,
     divisional_chart_factor: int = 1,
     chart_method: int = 1,
     dhasa_duration_type=None,
@@ -583,6 +584,7 @@ def drig_immediate_children(
 
     Uses birth-epoch positions (jd_at_dob) for ordering.
     """
+    if dhasa_method is None: dhasa_method = const.DRIG_TYPE_DEFAULT
     _set_year_duration(jd_at_dob, place, dhasa_duration_type=dhasa_duration_type, savana_year_method=savana_year_method)
 
     if isinstance(parent_lords, int):
@@ -629,7 +631,7 @@ def get_running_dhasa_for_given_date(
     current_jd: float,
     jd_at_dob: float,
     place,
-    dhasa_method=const.DRIG_TYPE.PVR_PAPER,
+    dhasa_method=None,
     dhasa_level_index: int = const.MAHA_DHASA_DEPTH.DEHA,
     *,
     divisional_chart_factor: int = 1,
@@ -646,6 +648,7 @@ def get_running_dhasa_for_given_date(
         ...
       ]
     """
+    if dhasa_method is None: dhasa_method = const.DRIG_TYPE_DEFAULT
     _set_year_duration(jd_at_dob, place, dhasa_duration_type=dhasa_duration_type, savana_year_method=savana_year_method)
 
     target_depth = max(1, min(6, int(dhasa_level_index)))

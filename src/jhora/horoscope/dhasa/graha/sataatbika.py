@@ -143,6 +143,7 @@ def get_dhasa_bhukthi(
               [ (l1, l2, ..., start_str, leaf_dur_years), ... ]
           (tuple grows by one lord per requested level)
     """
+    utils.validate_star_index(seed_star)
     global year_duration
 
     if not (1 <= dhasa_level_index <= 6):
@@ -243,6 +244,7 @@ def nakshathra_dhasa_progression(
         For nakshathra dhasa calculations for divisional charts - first calculate progression for raasi
         Then do varga division to progressed raasi longitudes
     """
+    utils.validate_star_index(seed_star)
     y, m, d, fh = utils.jd_to_gregorian(jd_at_dob)
     dob = drik.Date(y, m, d)
     tob = (fh, 0, 0)
@@ -332,6 +334,7 @@ def sataatbika_immediate_children(
     Returns:
       [ (lords_tuple_with_child), child_start_tuple, child_end_tuple ]
     """
+    utils.validate_star_index(seed_star)
     global year_duration
 
     year_duration = drik.dhasa_year_duration(
@@ -430,6 +433,7 @@ def get_running_dhasa_for_given_date(
     """
     Sataatbika — narrow Mahā -> … -> target depth and return the full running ladder.
     """
+    utils.validate_star_index(seed_star)
     global year_duration
 
     year_duration = drik.dhasa_year_duration(

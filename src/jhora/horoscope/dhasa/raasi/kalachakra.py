@@ -166,11 +166,12 @@ def _antardhasa_raghavacharya_by_padas(md_sign, md_years):
 # ---------------------------------------------------------------
 # L1 progression builder with birth balance and method hooks
 # ---------------------------------------------------------------
-def _get_dhasa_progression(planet_longitude, dhasa_method=const.KALACHAKRA_TYPE.PVR_BOOK):
+def _get_dhasa_progression(planet_longitude, dhasa_method=None):
     """
     Build the Mahā sequence and, for each Mahā, attach L2 payload according to method.
     Returns: list of [md_sign, (bhut_rasis, bhut_years, kc_i, pa_i), md_years]
     """
+    if dhasa_method is None: dhasa_method = const.KALACHAKRA_TYPE_DEFAULT
     if dhasa_method == const.KALACHAKRA_TYPE.RAGHAVACHARYA:
         lon0 = float(planet_longitude) % 360.0
         frac_left = _fraction_left_in_current_navamsa(lon0)
@@ -262,7 +263,7 @@ def kalachakra_dhasa(
     jd,
     dhasa_level_index=2,
     round_duration=True,
-    dhasa_method=const.KALACHAKRA_TYPE.PVR_BOOK,
+    dhasa_method=None,
     dhasa_duration_type=None,
     savana_year_method=None,
     place=None,
@@ -271,6 +272,7 @@ def kalachakra_dhasa(
     """
     Returns rows shaped as: [ ((lords...), start_str, dur_years), ... ]
     """
+    if dhasa_method is None: dhasa_method = const.KALACHAKRA_TYPE_DEFAULT
     global year_duration
 
     if place is not None:
@@ -358,7 +360,7 @@ def get_dhasa_bhukthi(
     star_position_from_moon=1,
     dhasa_level_index=2,
     round_duration=True,
-    dhasa_method=const.KALACHAKRA_TYPE.RAGHAVACHARYA,
+    dhasa_method=None,
     dhasa_duration_type=None,
     savana_year_method=None,
     **kwargs,
@@ -366,6 +368,7 @@ def get_dhasa_bhukthi(
     """
     Wrapper: computes JD & seed longitude and returns KCD rows.
     """
+    if dhasa_method is None: dhasa_method = const.KALACHAKRA_TYPE_DEFAULT
     global year_duration
 
     jd = utils.julian_day_number(dob, tob)
@@ -443,7 +446,7 @@ def kalachakra_immediate_children(
     *,
     jd_at_dob,
     place,
-    dhasa_method: int = const.KALACHAKRA_TYPE.PVR_BOOK,
+    dhasa_method = None,
     divisional_chart_factor: int = 1,
     chart_method: int = 1,
     dhasa_starting_planet: int = 1,
@@ -456,6 +459,7 @@ def kalachakra_immediate_children(
     """
     Kalachakra — return ONLY the immediate (p -> p+1) children inside the given parent span.
     """
+    if dhasa_method is None: dhasa_method = const.KALACHAKRA_TYPE_DEFAULT
     global year_duration
 
     year_duration = drik.dhasa_year_duration(
@@ -562,7 +566,7 @@ def get_running_dhasa_for_given_date(
     place,
     dhasa_level_index=const.MAHA_DHASA_DEPTH.DEHA,
     *,
-    dhasa_method: int = const.KALACHAKRA_TYPE.PVR_BOOK,
+    dhasa_method = None,
     divisional_chart_factor: int = 1,
     chart_method: int = 1,
     dhasa_starting_planet: int = 1,
@@ -575,6 +579,7 @@ def get_running_dhasa_for_given_date(
     """
     Kalachakra — narrow Mahā -> … -> target depth; return full running ladder.
     """
+    if dhasa_method is None: dhasa_method = const.KALACHAKRA_TYPE_DEFAULT
     global year_duration
 
     year_duration = drik.dhasa_year_duration(

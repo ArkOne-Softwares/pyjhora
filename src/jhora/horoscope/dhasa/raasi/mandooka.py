@@ -86,7 +86,7 @@ def get_dhasa_antardhasa(
     years=1, months=1, sixty_hours=1,
     dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,  # 1..6 (1=Maha only, 2=+Antara [default], 3..6 deeper)
     round_duration=True,
-    dhasa_method=const.MANDOOKA_TYPE.KN_RAO,                    # <-- 2 = K.N. Rao (as before), 1 = Sanjay Rath (added)
+    dhasa_method=None,                    # <-- 2 = K.N. Rao (as before), 1 = Sanjay Rath (added)
     dhasa_duration_type=None,
     savana_year_method=None,
     **kwargs
@@ -110,7 +110,7 @@ def get_dhasa_antardhasa(
     Rounding:
       • Returned durations rounded to `dhasa_level_index` digits when `round_duration=True`; JD math uses full precision.
     """
-    # ---- Safety ---------------------------------------------------------------
+    if dhasa_method is None: dhasa_method = const.MANDOOKA_TYPE_DEFAULT
     if not (const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY <= dhasa_level_index <= const.MAHA_DHASA_DEPTH.DEHA):
         raise ValueError("dhasa_level_index must be in 1..6 (1=Maha .. 6=Deha).")
 
@@ -271,7 +271,7 @@ def mandooka_immediate_children(
     years: int = 1, months: int = 1, sixty_hours: int = 1,
     chart_method: int = 1,       # kept for parity (not used by charts.divisional_chart here)
     round_duration: bool = False,   # tiler returns exact spans; no rounding here
-    dhasa_method: int = const.MANDOOKA_TYPE.KN_RAO,             # 2 = KNRao (current); 1 = Sanjay Rath (reserved for later)
+    dhasa_method = None,             # 2 = KNRao (current); 1 = Sanjay Rath (reserved for later)
     dhasa_duration_type=None,
     savana_year_method=None,
     **kwargs
@@ -287,6 +287,7 @@ def mandooka_immediate_children(
       • Split rule: equal (parent_years / 12)  → Σ(children) = parent.
       • Exact tiling of [parent_start, parent_end); last child clamped to parent_end.
     """
+    if dhasa_method is None: dhasa_method = const.MANDOOKA_TYPE_DEFAULT
     _set_year_duration(jd_at_dob, place, dhasa_duration_type, savana_year_method)
 
     # ---- normalize parent path
@@ -378,7 +379,7 @@ def get_running_dhasa_for_given_date(
     years: int = 1, months: int = 1, sixty_hours: int = 1,
     chart_method: int = 1,        # kept for parity
     round_duration: bool = False, # runner uses exact (start,end)
-    dhasa_method: int = const.MANDOOKA_TYPE.KN_RAO,              # 2 = KNRao (current); 1 = SR (reserved)
+    dhasa_method = None,              # 2 = KNRao (current); 1 = SR (reserved)
     dhasa_duration_type=None,
     savana_year_method=None,
     **kwargs
@@ -395,6 +396,7 @@ def get_running_dhasa_for_given_date(
         [(l1,l2,l3,l4,l5,l6),start6, end6],
       ]
     """
+    if dhasa_method is None: dhasa_method = const.MANDOOKA_TYPE_DEFAULT
     _set_year_duration(jd_at_dob, place, dhasa_duration_type, savana_year_method)
 
     # ---- depth normalization

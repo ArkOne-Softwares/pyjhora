@@ -27,7 +27,6 @@ from jhora.panchanga import drik
     2=> Parasara/PVN Rao Method - from https://vedicastrologer.org/articles/pp_chara_dasa.pdf
     3=> Raghava Bhatta method from https://sutramritam.blogspot.com/2009/08/chara-dasa-raghava-bhatta-nrisimha-suri.html
 """
-chara_method = 1
 _dhasa_cycles = 2
 one_year_days = const.sidereal_year
 
@@ -226,7 +225,7 @@ def _dhasa_duration_mindsutra(planet_positions, sign):
     if lord_house == (sign + const.HOUSE_7) % 12:
         return 10
     forward = lord_house in const.odd_signs
-    count = utils.count_rasis(lord_house, sign, 1) if forward else utils.count_rasis(lord_house, sign, -1)
+    count = utils.count_rasis(lord_house, sign, direction=1) if forward else utils.count_rasis(lord_house, sign, direction=-1)
     years = count - 1
     if years <= 0:
         years = 12
@@ -370,7 +369,7 @@ def get_dhasa_antardhasa(
     years=1,
     months=1,
     sixty_hours=1,
-    chara_method=2,
+    chara_method=None,
     gender=0,
     dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,
     round_duration=True,
@@ -381,6 +380,7 @@ def get_dhasa_antardhasa(
     """
     Chara Daśā (sign-based), depth-enabled.
     """
+    if chara_method is None: chara_method = const.CHARA_TYPE_DEFAULT
     global one_year_days
 
     if not (1 <= dhasa_level_index <= 6):
@@ -523,7 +523,7 @@ def chara_immediate_children(
     *,
     jd_at_dob,
     place,
-    chara_method: int = const.CHARA_TYPE.KN_RAO,
+    chara_method = None,
     gender: int = 0,
     divisional_chart_factor: int = 1,
     years: int = 1,
@@ -537,6 +537,7 @@ def chara_immediate_children(
     """
     Chara — return ONLY the immediate (p -> p+1) children inside the given parent span.
     """
+    if chara_method is None: chara_method = const.CHARA_TYPE_DEFAULT
     global one_year_days
 
     one_year_days = drik.dhasa_year_duration(
@@ -647,7 +648,7 @@ def get_running_dhasa_for_given_date(
     place,
     dhasa_level_index=const.MAHA_DHASA_DEPTH.DEHA,
     *,
-    chara_method: int = const.CHARA_TYPE.KN_RAO,
+    chara_method = None,
     gender: int = 0,
     divisional_chart_factor: int = 1,
     years: int = 1,
@@ -662,7 +663,7 @@ def get_running_dhasa_for_given_date(
     Chara — narrow Mahā -> … -> target depth and return the full running ladder.
     """
     global one_year_days
-
+    if chara_method is None: chara_method = const.CHARA_TYPE_DEFAULT
     one_year_days = drik.dhasa_year_duration(
         jd=jd_at_dob,
         place=place,

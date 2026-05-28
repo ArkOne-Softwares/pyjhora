@@ -116,6 +116,7 @@ def get_dhasa_bhukthi(
     Returns a list of rows, each row shaped as:
         [(lords_tuple), start_tuple, duration_years]
     """
+    utils.validate_star_index(seed_star)
     global year_duration
 
     if not (1 <= dhasa_level_index <= 6):
@@ -223,6 +224,7 @@ def nakshathra_dhasa_progression(
     dhasa_duration_type=None,
     savana_year_method=None,
 ):
+    utils.validate_star_index(seed_star)
     y, m, d, fh = utils.jd_to_gregorian(jd_at_dob)
     dob = drik.Date(y, m, d)
     tob = (fh, 0, 0)
@@ -293,6 +295,7 @@ def yogini_immediate_children(
     """
     Yoginī — return ONLY the immediate (p -> p+1) children inside the given parent span.
     """
+    utils.validate_star_index(seed_star)
     global year_duration
 
     year_duration = drik.dhasa_year_duration(
@@ -385,6 +388,7 @@ def get_running_dhasa_for_given_date(
     """
     Yoginī — narrow Mahā -> … -> target depth and return the full running ladder.
     """
+    utils.validate_star_index(seed_star)
     global year_duration
 
     year_duration = drik.dhasa_year_duration(

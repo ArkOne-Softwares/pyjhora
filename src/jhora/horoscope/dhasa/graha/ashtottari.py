@@ -18,9 +18,12 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 """
 Calculates Ashtottari (=108) Dasha-bhukthi-antara-sukshma-prana
+"""
+"""
+    Release History:
+    V4.8.6 - dhasa start state for Rahu lord fixed
 """
 
 from collections import OrderedDict as Dict
@@ -166,7 +169,7 @@ def ashtottari_dasha_start_date(
     divisional_chart_factor=1,
     chart_method=1,
     star_position_from_moon=1,
-    dhasa_starting_planet=1,
+    dhasa_starting_planet=const.MOON_ID,
 ):
     planet_long = charts.get_chart_element_longitude(
         jd,
@@ -179,20 +182,22 @@ def ashtottari_dasha_start_date(
 
     nak = int(planet_long / one_star)
     lord, res = ashtottari_adhipathi(nak + 1)
-
     if lord is None or res is None:
         raise ValueError(f"Unable to determine Ashtottari adhipathi for nakshatra {nak + 1}")
 
     period = res[1]
     start_nak = res[0][0]
     end_nak = res[0][1]
-
-    period_elapsed = (planet_long - (start_nak - 1) * one_star) / (
-        (end_nak - start_nak + 1) * one_star
-    )
-    period_elapsed *= period * year_duration
-
+    start_deg = (start_nak - 1) * one_star
+    pl = planet_long
+    if end_nak < start_nak and pl < start_deg:
+        pl += 360
+    span_stars = utils.count_stars(start_nak, end_nak, direction=1, total=27)
+    total_span = span_stars * one_star
+    elapsed_span = pl - start_deg
+    period_elapsed = (elapsed_span / total_span) * period * year_duration
     start_date = jd - period_elapsed
+    #print(nak,lord,start_nak,end_nak,period_elapsed,utils.jd_to_gregorian(start_date))
     return [lord, start_date]
 
 
@@ -323,6 +328,7 @@ def get_ashtottari_dhasa_bhukthi(
         Duration is returned in years.
         JD calculations use module-level year_duration set at start of this function.
     """
+    utils.validate_star_index(seed_star)
     global human_life_span_for_ashtottari_dhasa, ashtottari_adhipathi_dict
     global year_duration
 
@@ -469,6 +475,7 @@ def nakshathra_dhasa_progression(
     savana_year_method=None,
     **kwargs,
 ):
+    utils.validate_star_index(seed_star)
     DLI = dhasa_level_index
 
     vd = get_ashtottari_dhasa_bhukthi(
@@ -776,7 +783,7 @@ def get_running_dhasa_for_given_date(
 # ---------------------------------------------------------------------
 if __name__ == "__main__":
     utils.set_language("en")
-
+    """
     dob = drik.Date(1996, 12, 7)
     tob = (10, 34, 0)
 
@@ -836,10 +843,43 @@ if __name__ == "__main__":
         )
 
         print("old method elapsed time", time.time() - start_time)
-
     exit()
-
+    """
+    #"""
+    # Wrap Test Case 26 -> 2 for Rahu
+    print("Test Settings:")
+    dob = drik.Date(2000, 1, 13)
+    tob = (10,34,0); place = drik.Place('Chennai',13.0878,80.2785,5.5)
+    print(dob,tob,place)
+    const._use_true_nodes_for_rahu_ketu = True
+    print('const._use_true_nodes_for_rahu_ketu=',const._use_true_nodes_for_rahu_ketu)
+    drik.set_planet_list(set_rahu_ketu_as_true_nodes=True, include_western_planets=False)
+    print("drik.set_planet_list(set_rahu_ketu_as_true_nodes=True, include_western_planets=False)")
+    drik.set_ayanamsa_mode("TRUE_PUSHYA")
+    print("drik.set_ayanamsa_mode('TRUE_PUSHYA')")
+    lang = 'en'; const._DEFAULT_LANGUAGE = lang
+    const.use_24hour_format_in_to_dms = False
+    """ below is required because all dhasa are tested only for mean_sidereal as year duration"""
+    const.dhasa_year_duration_default = const.DHASA_YEAR_DURATION.MEAN_SIDEREAL_YEAR
+    jd = utils.julian_day_number(dob, tob)
+    result = get_ashtottari_dhasa_bhukthi(
+        jd,
+        place,
+        seed_star=6,
+        dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY
+    )
+    
+    first_lord, start_tuple, duration = result[0]
+    y,m,d,fh = start_tuple
+    print("Results: ashtottari dhasa lord and start")
+    print(first_lord, (y,m,d,utils.to_dms(fh)),"JHora V8.0 for same setting: Rahu - (1997,11,20, 23:27:26)",)
+    
+    exit()
+    #"""
+    """
     from jhora.tests import pvr_tests
 
     pvr_tests._STOP_IF_ANY_TEST_FAILED = True
     pvr_tests.ashtottari_tests()
+    exit()
+    """

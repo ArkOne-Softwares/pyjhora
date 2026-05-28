@@ -410,7 +410,7 @@ def _get_global_constants(jd,place):
 def get_dhasa_antardhasa(
     jd,
     place,
-    aayur_type=const.AAYU_TYPE.NONE,
+    aayur_type=None,
     apply_haranas=True,
     method=2,
     divisional_chart_factor=9,
@@ -442,6 +442,7 @@ def get_dhasa_antardhasa(
               else:                     [ (dhasa_lord, sub1, [sub2..sub5], dhasa_start, sub_duration_rounded), ... ]
           Example (L2): [ (7, 5, '1915-02-09 00:00:00 AM', 1.23), (7, 0, '1916-05-10 08:12:34 AM', 1.23), ...]
     """
+    if aayur_type is None: aayur_type = const.AAYU_TYPE_DEFAULT
     global one_year_days
     one_year_days = drik.dhasa_year_duration(dhasa_duration_type=dhasa_duration_type, jd=jd, place=place,
                                              savana_year_method=savana_year_method)
@@ -541,24 +542,25 @@ def get_dhasa_antardhasa(
 
 def pindayu_dhasa_bhukthi(jd,place,dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,apply_haranas=True,method=2,
                           divisional_chart_factor=9,chart_method=1,dhasa_duration_type=None,savana_year_method=None):
-    return get_dhasa_antardhasa(jd, place, aayur_type=0, dhasa_level_index=dhasa_level_index, 
+    return get_dhasa_antardhasa(jd, place, aayur_type=const.AAYU_TYPE.PINDA, dhasa_level_index=dhasa_level_index, 
                                 apply_haranas=apply_haranas, method=method,
                                 divisional_chart_factor=divisional_chart_factor,chart_method=chart_method,
                                 dhasa_duration_type=dhasa_duration_type,savana_year_method=savana_year_method)[1]
 def nisargayu_dhasa_bhukthi(jd,place,dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,apply_haranas=True,method=2,
                           divisional_chart_factor=9,chart_method=1,dhasa_duration_type=None,savana_year_method=None):
-    return get_dhasa_antardhasa(jd, place, aayur_type=1, dhasa_level_index=dhasa_level_index, 
+    return get_dhasa_antardhasa(jd, place, aayur_type=const.AAYU_TYPE.NISARGA, dhasa_level_index=dhasa_level_index, 
                                 apply_haranas=apply_haranas, method=method,
                                 divisional_chart_factor=divisional_chart_factor,chart_method=chart_method,
                                 dhasa_duration_type=dhasa_duration_type,savana_year_method=savana_year_method)[1]
 def amsayu_dhasa_bhukthi(jd,place,dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,apply_haranas=True,method=2,
                           divisional_chart_factor=9,chart_method=1,dhasa_duration_type=None,savana_year_method=None):
-    return get_dhasa_antardhasa(jd, place, aayur_type=2, dhasa_level_index=dhasa_level_index, 
+    return get_dhasa_antardhasa(jd, place, aayur_type=const.AAYU_TYPE.AMSA, dhasa_level_index=dhasa_level_index, 
                                 apply_haranas=apply_haranas, method=method,
                                 divisional_chart_factor=divisional_chart_factor,chart_method=chart_method,
                                 dhasa_duration_type=dhasa_duration_type,savana_year_method=savana_year_method)[1]
-def longevity(jd,place,aayu_type=None,method=2):
-    _at,_adb = get_dhasa_antardhasa(jd, place, aayur_type=aayu_type, dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY,
+def longevity(jd,place,aayur_type=None,method=2):
+    if aayur_type is None: aayur_type = const.AAYU_TYPE_DEFAULT
+    _at,_adb = get_dhasa_antardhasa(jd, place, aayur_type=aayur_type, dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY,
                                     apply_haranas=True, method=method)
     _longevity = sum(d for _,_,d in _adb)
     return _longevity,_at
@@ -594,6 +596,7 @@ def aayu_immediate_children(
       - We do NOT compute rounding of durations (end times are exact tiling); rounding is only for
         display or your duration-emitting functions.
     """
+    if aayur_type is None: aayur_type = const.AAYU_TYPE_DEFAULT
     # ---- normalize lords path ----
     if isinstance(parent_lords, int):
         path = (parent_lords,)

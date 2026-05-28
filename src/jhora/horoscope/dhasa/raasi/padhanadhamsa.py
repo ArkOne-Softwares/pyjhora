@@ -62,7 +62,7 @@ def _dhasa_duration(planet_positions, dhasa_sign):
         return 10
 
     direction = +1 if dhasa_sign in const.odd_signs else -1
-    return utils.count_rasis(dhasa_sign, house_of_lord, dir=direction, total=12)
+    return utils.count_rasis(dhasa_sign, house_of_lord, direction=direction, total=12)
 
 
 def _dhasa_progression(dhasa_lord):
@@ -312,25 +312,26 @@ def _pvr_generalized_method(dob, tob, place, divisional_chart_factor=1,
 def get_dhasa_antardhasa(dob, tob, place,
                          divisional_chart_factor=9, years=1, months=1, sixty_hours=1,
                          dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,
-                         round_duration=True, method=const.PADHANADHAMSA_TYPE.IRANGATTI_RANGACHARYA,
+                         round_duration=True, dhasa_method=None,
                          # SR variant: choose D9 build (1=Parāśara, 4=KM/Nādi)
                          navamsa_chart_method_for_sr=1,
                          dhasa_duration_type=None,
                          savana_year_method=None,
                          **kwargs):
     """
-    method=1 -> Iranganti Rangacharya (D-9 KM/Nādi ONLY; seed+engine in D9)
-    method=2 -> Sanjay Rath (D-9 ONLY; Padanathamsa = Navamsa Narayana)
-    method=3 -> PVR/JHora generalized (seed & engine in target varga 'dcf')
+    dhasa_method=1 -> Iranganti Rangacharya (D-9 KM/Nādi ONLY; seed+engine in D9)
+    dhasa_method=2 -> Sanjay Rath (D-9 ONLY; Padanathamsa = Navamsa Narayana)
+    dhasa_method=3 -> PVR/JHora generalized (seed & engine in target varga 'dcf')
 
     NOTE:
       - For methods 1 & 2, D-9 is used internally regardless of 'divisional_chart_factor'.
       - For method 3, 'divisional_chart_factor' drives both seed & engine.
     """
+    if dhasa_method is None: dhasa_method = const.PADHANADHAMSA_TYPE_DEFAULT
     jd_at_dob = utils.julian_day_number(dob, tob)
     _set_year_duration(jd_at_dob, place, dhasa_duration_type, savana_year_method)
 
-    if method == const.PADHANADHAMSA_TYPE.IRANGATTI_RANGACHARYA:
+    if dhasa_method == const.PADHANADHAMSA_TYPE.IRANGATTI_RANGACHARYA:
         return _iranganti_rangacharya_method(
             dob, tob, place,
             years=years, months=months, sixty_hours=sixty_hours,
@@ -341,7 +342,7 @@ def get_dhasa_antardhasa(dob, tob, place,
             **kwargs
         )
 
-    if method == const.PADHANADHAMSA_TYPE.SANJAY_RATH:
+    if dhasa_method == const.PADHANADHAMSA_TYPE.SANJAY_RATH:
         return _sanjay_rath_method(
             dob, tob, place,
             years=years, months=months, sixty_hours=sixty_hours,
@@ -353,7 +354,7 @@ def get_dhasa_antardhasa(dob, tob, place,
             **kwargs
         )
 
-    # method == 3 (PVR generalized)
+    # dhasa_method == 3 (PVR generalized)
     return _pvr_generalized_method(
         dob, tob, place,
         divisional_chart_factor=divisional_chart_factor,
@@ -379,7 +380,7 @@ def padanadhamsa_immediate_children(
     years: int = 1,
     months: int = 1,
     sixty_hours: int = 1,
-    dhasa_method: int = const.PADHANADHAMSA_TYPE.IRANGATTI_RANGACHARYA,
+    dhasa_method = None,
     navamsa_chart_method_for_sr: int = 1,
     round_duration: bool = False,
     dhasa_duration_type=None,
@@ -400,6 +401,7 @@ def padanadhamsa_immediate_children(
       • Method 2 (SR – D9 Narayana) & Method 3 (PVR generalized):
         - Use base router get_dhasa_antardhasa(...depth=k+1) and filter rows under parent.
     """
+    if dhasa_method is None: dhasa_method = const.PADHANADHAMSA_TYPE_DEFAULT
     _set_year_duration(jd_at_dob, place, dhasa_duration_type, savana_year_method)
 
     # ---- normalize parent path
@@ -471,7 +473,7 @@ def padanadhamsa_immediate_children(
         years=years, months=months, sixty_hours=sixty_hours,
         dhasa_level_index=k + 1,
         round_duration=False,
-        method=int(dhasa_method),
+        dhasa_method=int(dhasa_method),
         navamsa_chart_method_for_sr=navamsa_chart_method_for_sr,
         dhasa_duration_type=dhasa_duration_type,
         savana_year_method=savana_year_method,
@@ -510,7 +512,7 @@ def get_running_dhasa_for_given_date(
     years: int = 1,
     months: int = 1,
     sixty_hours: int = 1,
-    dhasa_method: int = const.PADHANADHAMSA_TYPE.IRANGATTI_RANGACHARYA,
+    dhasa_method = None,
     navamsa_chart_method_for_sr: int = 1,
     round_duration: bool = False,
     dhasa_duration_type=None,
@@ -526,6 +528,7 @@ def get_running_dhasa_for_given_date(
         [(s1,..,s_d),        startd, endd]
       ]
     """
+    if dhasa_method is None: dhasa_method = const.PADHANADHAMSA_TYPE_DEFAULT
     _set_year_duration(jd_at_dob, place, dhasa_duration_type, savana_year_method)
 
     # ---- depth normalization
@@ -572,7 +575,7 @@ def get_running_dhasa_for_given_date(
         years=years, months=months, sixty_hours=sixty_hours,
         dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY,
         round_duration=False,
-        method=int(dhasa_method),
+        dhasa_method=int(dhasa_method),
         navamsa_chart_method_for_sr=navamsa_chart_method_for_sr,
         dhasa_duration_type=dhasa_duration_type,
         savana_year_method=savana_year_method,
@@ -668,7 +671,7 @@ if __name__ == "__main__":
         ad = get_dhasa_antardhasa(
             dob, tob, place,
             dhasa_level_index=const.MAHA_DHASA_DEPTH.DEHA,
-            method=_dhasa_method,
+            dhasa_method=_dhasa_method,
             dhasa_duration_type=dd
         )
         print(utils.get_running_dhasa_at_all_levels_for_given_date(

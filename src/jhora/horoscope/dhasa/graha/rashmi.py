@@ -54,7 +54,7 @@ def _rashmi_order_rays_and_balance(
     divisional_chart_factor=1,
     chart_method=1,
     navamsa_chart_method=1,
-    dhasa_method=const.RASHMI_TYPE.BPHS_HIGHEST_RAY,
+    dhasa_method=None,
     vimsottari_method_seed_star=3,
     use_real_combusion_limits=True,
 ):
@@ -62,6 +62,7 @@ def _rashmi_order_rays_and_balance(
     Build Rashmi planet rays, total rays, order, and first-Mahadhasa balance factor.
     Shared by base generator and immediate-children runner.
     """
+    if dhasa_method is None: dhasa_method = const.RASHMI_TYPE_DEFAULT
     # --- Constants & Tables (BPHS Canonical) ---
     MAX_RAYS_LOCAL = {0: 10, 1: 9, 2: 5, 3: 5, 4: 7, 5: 16, 6: 4}
     DEEP_EXALT = {0: 10, 1: 33, 2: 298, 3: 165, 4: 95, 5: 357, 6: 200}
@@ -162,6 +163,7 @@ def get_rashmi_dhasa_bhukthi(
     dhasa_duration_type=None,
     savana_year_method=None,
 ):
+    utils.validate_star_index(vimsottari_method_seed_star)
     global year_duration
 
     if not (1 <= dhasa_level_index <= 6):
@@ -246,7 +248,7 @@ def rashmi_immediate_children(
     *,
     jd_at_dob,
     place,
-    dhasa_method: int = const.RASHMI_TYPE.BPHS_HIGHEST_RAY,
+    dhasa_method: int = None,
     chart_method: int = 1,
     navamsa_chart_method: int = 1,
     vimsottari_method_seed_star: int = 3,
@@ -260,6 +262,8 @@ def rashmi_immediate_children(
     """
     Rāśmi Daśā — return ONLY the immediate (p -> p+1) children for the given parent span.
     """
+    if dhasa_method is None: dhasa_method = const.RASHMI_TYPE_DEFAULT
+    utils.validate_star_index(vimsottari_method_seed_star)
     global year_duration
 
     year_duration = drik.dhasa_year_duration(
@@ -348,7 +352,7 @@ def get_running_dhasa_for_given_date(
     jd_at_dob,
     place,
     dhasa_level_index=const.MAHA_DHASA_DEPTH.DEHA,
-    dhasa_method: int = const.RASHMI_TYPE.BPHS_HIGHEST_RAY,
+    dhasa_method: int = None,
     chart_method: int = 1,
     navamsa_chart_method: int = 1,
     vimsottari_method_seed_star: int = 3,
@@ -364,6 +368,8 @@ def get_running_dhasa_for_given_date(
     """
     Rāśmi Daśā — narrow Mahā -> … -> target depth and return the full running ladder.
     """
+    if dhasa_method is None: dhasa_method = const.RASHMI_TYPE_DEFAULT
+    utils.validate_star_index(vimsottari_method_seed_star)
     global year_duration
 
     year_duration = drik.dhasa_year_duration(

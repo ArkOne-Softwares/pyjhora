@@ -175,6 +175,7 @@ def get_dhasa_bhukthi(
         5 = Prana
         6 = Deha
     """
+    utils.validate_star_index(seed_star)
     global year_duration
 
     if not (
@@ -301,6 +302,7 @@ def nakshathra_dhasa_progression(
         First calculate progression for rasi, then apply varga division to
         progressed rasi longitudes.
     """
+    utils.validate_star_index(seed_star)
     y, m, d, fh = utils.jd_to_gregorian(jd_at_dob)
     dob = drik.Date(y, m, d)
     tob = (fh, 0, 0)
@@ -496,6 +498,7 @@ def get_running_dhasa_for_given_date(
             [(l1,l2,l3,l4,l5,l6),  start6, end6],
         ]
     """
+    utils.validate_star_index(seed_star)
     global year_duration
 
     year_duration = drik.dhasa_year_duration(

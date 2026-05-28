@@ -76,7 +76,7 @@ def get_dhasa_bhukthi(
     divisional_chart_factor=1, chart_method=1,
     years=1, months=1, sixty_hours=1,
     dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,
-    dhasa_method=const.TARA_TYPE.SANJAY_RATH,
+    dhasa_method=None,
     round_duration=True,
     dhasa_duration_type=None,
     savana_year_method=None,
@@ -114,6 +114,7 @@ def get_dhasa_bhukthi(
           else:
             [ (dhasa_lord, bhukthi_lord, [further sub-lords...], dhasa_start, leaf_duration_years), ... ]
     """
+    if dhasa_method is None: dhasa_method = const.TARA_TYPE_DEFAULT
     global year_duration
 
     if not (1 <= dhasa_level_index <= 6):
@@ -244,7 +245,7 @@ def tara_immediate_children(
     *,
     jd_at_dob,
     place,
-    dhasa_method: int = const.TARA_TYPE.SANJAY_RATH,
+    dhasa_method = None,
     divisional_chart_factor: int = 1,
     chart_method: int = 1,
     years: int = 1,
@@ -267,6 +268,7 @@ def tara_immediate_children(
     Returns:
       [ (lords_tuple_with_child), child_start_tuple, child_end_tuple ]
     """
+    if dhasa_method is None: dhasa_method = const.TARA_TYPE_DEFAULT
     global year_duration
 
     year_duration = drik.dhasa_year_duration(
@@ -349,7 +351,7 @@ def get_running_dhasa_for_given_date(
     place,
     dhasa_level_index=const.MAHA_DHASA_DEPTH.DEHA,
     *,
-    dhasa_method: int = const.TARA_TYPE.SANJAY_RATH,
+    dhasa_method = None,
     divisional_chart_factor: int = 1,
     chart_method: int = 1,
     years: int = 1,
@@ -363,6 +365,7 @@ def get_running_dhasa_for_given_date(
     """
     Tara Daśā — narrow Mahā -> … -> target depth and return the full running ladder.
     """
+    if dhasa_method is None: dhasa_method = const.TARA_TYPE_DEFAULT
     global year_duration
 
     year_duration = drik.dhasa_year_duration(
