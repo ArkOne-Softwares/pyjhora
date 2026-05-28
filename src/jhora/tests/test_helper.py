@@ -83,6 +83,17 @@ _BASELINE_WRITE_MODE = 'expected'    # 'expected' | 'actual'
 # -----------------------------
 # Public setters/getters
 # -----------------------------
+_SELECTED_TEST_FUNCS = None
+
+def set_function_subset(func_names):
+    global _SELECTED_TEST_FUNCS
+    _SELECTED_TEST_FUNCS = set(func_names) if func_names else None
+
+def _should_run_function(func_name):
+    if _SELECTED_TEST_FUNCS is None:
+        return True
+    return func_name in _SELECTED_TEST_FUNCS
+
 def set_subset(numbers=None, ranges=None, desc_contains=None, enabled=True, verbose_skip=False):
     """
     Configure a subset filter.
@@ -813,6 +824,7 @@ def get_subset_config():
         "desc_contains": _subset_desc_contains,
         "verbose_skip": _subset_verbose_skip,
         "stop_after_subset_end": _STOP_AFTER_SUBSET_END,
+        "test_functions": sorted(_SELECTED_TEST_FUNCS) if _SELECTED_TEST_FUNCS else None,
     }
 
 def show_configuration_summary(summary_lines):

@@ -771,7 +771,7 @@ def _ashtothari_test_9():
         test_example(chapter,exp[i],vd[i])
 def chapter_14_tests():
     chapter = 'Chapter 14'
-    place = drik.Place('unknown',15+39/60, 38+6/60, +1.0)
+    place = drik.Place('unknown',38+6/60,15+39/60, +1.0) # V4.8.6 Lat/Long swapped
     dob = drik.Date(1946,12,2)
     tob = (6,45,0)
     time_of_birth_in_hours = tob[0]+tob[1]/60+tob[2]/3600.0
@@ -807,7 +807,7 @@ def chapter_14_tests():
         chapter = 'Chapter 14.3 Rudra Trishoola Tests'
         exercise = 'Exercise 23'
         chart_8 = ['','7','','6','','','3/4/5','L/0/2/8','','','1','']
-        r = house.rudra_based_on_planet_positions(dob, tob, place, divisional_chart_factor=divisional_chart_factor)
+        r = house.rudra_from_jd_place(jd, place, divisional_chart_factor=divisional_chart_factor) #V4.8.6
         test_example(chapter+exercise,(3, 6, [6, 10, 2]),r)
     def maheshwara_tests():
         chapter = 'Chapter 14.3 Maheshwara Tests '
@@ -2582,7 +2582,8 @@ def other_yoga_tests():
         is_shukla_paksha = True; is_daytime_birth = True
         chart_rasi = ['L/7', '2', '5', '4/0', '6', '', '8', '', '1/3', '', '', '']
         chart_navamsa = ['L/7', '0', '2', '6', '', '5', '8', '', '1/4', '3', '', '']
-        actual_result = yoga._garuda_yoga_calculation(chart_rasi, chart_navamsa, is_shukla_paksha, is_daytime_birth)
+        actual_result = yoga._garuda_yoga_calculation(chart_1d_rasi=chart_rasi, chart_1d_navamsa=chart_navamsa, 
+                                                      is_shukla_paksha=is_shukla_paksha, is_daytime_birth=is_daytime_birth)
         test_example(chapter + exercise, expected_result, actual_result, chart_rasi)
     garuda_yoga_test()
     def sankhya_yogas_test():
@@ -4377,7 +4378,8 @@ def kalachakra_dhasa_tests():
            [0, 1, 2, 3, 4, 5, 6, 7, 8], [6, 5, 3, 4, 2, 1, 0, 11, 10]]
     for e, dhasa_starting_planet in enumerate( const.SUN_TO_SATURN+['L','Md','PL','IL','Gk','S1','BBL']):
         vb = kalachakra.get_dhasa_bhukthi(dob, tob, place, dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY, 
-                                                    dhasa_starting_planet=dhasa_starting_planet)
+                                                    dhasa_starting_planet=dhasa_starting_planet,
+                                                    dhasa_method=const.KALACHAKRA_TYPE.RAGHAVACHARYA)
         act = [p for p,_,_ in vb]
         test_example(chapter+' dhasa_starting_planet test',exp[e],act,'dhasa_starting_planet=',dhasa_starting_planet)
 def chapter_21_tests():
@@ -6007,7 +6009,7 @@ def chara_dhasa_test():
     dob = (1996,12,7)
     tob = (10,34,0)
     place = drik.Place('Chennai',13.0878,80.2785,5.5)
-    chara_method = 2; exercise = 'KN Rao Method'
+    chara_method = const.CHARA_TYPE.KN_RAO; exercise = 'KN Rao Method'
     yd = chara.get_dhasa_antardhasa(dob, tob, place,dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY,
                                     chara_method=chara_method,gender=1)
     exp = [(9, '1996-12-07 10:34:00 AM', 10), (8, '2006-12-08 00:05:38 AM', 12), (7, '2018-12-08 01:55:37 AM', 4), 
@@ -6016,19 +6018,19 @@ def chara_dhasa_test():
            (0, '2072-12-07 22:10:29 PM', 4), (11, '2076-12-07 22:47:08 PM', 3), (10, '2079-12-08 17:14:38 PM', 11)]
     for i,act in enumerate(yd):
         test_example(chapter,exp[i],act)
-    chara_method = 1; exercise = 'Parasara/PVN Rao Method'
+    chara_method = const.CHARA_TYPE.PVN_RAO; exercise = 'Parasara/PVN Rao Method'
     yd = chara.get_dhasa_antardhasa(dob, tob, place,dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY,
                                     chara_method=chara_method,gender=1)
     exp = [(9, '1996-12-07 10:34:00 AM', 10), (8, '2006-12-08 00:05:38 AM', 12), (7, '2018-12-08 01:55:37 AM', 4), (6, '2022-12-08 02:32:16 AM', 12), (5, '2034-12-08 04:22:14 AM', 9), (4, '2043-12-08 11:44:43 AM', 9), (3, '2052-12-07 19:07:12 PM', 9), (2, '2061-12-08 02:29:40 AM', 6), (1, '2067-12-08 15:24:39 PM', 5), (0, '2072-12-07 22:10:29 PM', 4), (11, '2076-12-07 22:47:08 PM', 3), (10, '2079-12-08 17:14:38 PM', 11), (9, '2090-12-08 12:55:26 PM', 2.0), (8, '2092-12-08 01:13:46 AM', 0.0), (7, '2092-12-08 01:13:46 AM', 8.0), (6, '2100-12-09 02:27:04 AM', 0.0), (5, '2100-12-09 02:27:04 AM', 3.0), (4, '2103-12-09 20:54:34 PM', 3.0), (3, '2106-12-09 15:22:03 PM', 3.0), (2, '2109-12-09 09:49:33 AM', 6.0), (1, '2115-12-09 22:44:32 PM', 7.0), (0, '2122-12-09 17:48:41 PM', 8.0), (11, '2130-12-09 19:02:00 PM', 9.0), (10, '2139-12-10 02:24:28 AM', 1.0)]
     for i,act in enumerate(yd):
         test_example(chapter,exp[i],act)
-    chara_method = 3; exercise = 'Rangacharya Method'
+    chara_method = const.CHARA_TYPE.IRANGATTI_MALE1; exercise = 'Rangacharya Method'
     yd = chara.get_dhasa_antardhasa(dob, tob, place,dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY,
                                     chara_method=chara_method,gender=1)
     exp_durn_jhora = [12,3,9,3,10,5,8,9,11,2,12,9,0,9,3]
     for i,act in enumerate(yd):
         test_example(chapter,exp[i],act)
-    chara_method = 3; exercise = 'Rangacharya Method'
+    chara_method = const.CHARA_TYPE.IRANGATTI_MALE1; exercise = 'Rangacharya Method'
     yd = chara.get_dhasa_antardhasa(dob, tob, place,dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,
                                     chara_method=chara_method,gender=1)
     exp = [(6, 6, '1996-12-07 10:34:00 AM', 1.0), (6, 7, '1997-12-07 16:43:10 PM', 1.0), (6, 8, '1998-12-07 22:52:20 PM', 1.0), (6, 9, '1999-12-08 05:01:30 AM', 1.0), (6, 10, '2000-12-07 11:10:39 AM', 1.0), (6, 11, '2001-12-07 17:19:49 PM', 1.0), (6, 0, '2002-12-07 23:28:59 PM', 1.0), (6, 1, '2003-12-08 05:38:09 AM', 1.0), (6, 2, '2004-12-07 11:47:19 AM', 1.0), (6, 3, '2005-12-07 17:56:29 PM', 1.0), (6, 4, '2006-12-08 00:05:38 AM', 1.0), (6, 5, '2007-12-08 06:14:48 AM', 1.0), (5, 5, '2008-12-07 12:23:58 PM', 0.25), (5, 1, '2009-03-08 19:56:16 PM', 0.25), (5, 9, '2009-06-08 03:28:33 AM', 0.25), (5, 4, '2009-09-07 11:00:51 AM', 0.25), (5, 0, '2009-12-07 18:33:08 PM', 0.25), (5, 8, '2010-03-09 02:05:26 AM', 0.25), (5, 3, '2010-06-08 09:37:43 AM', 0.25), (5, 11, '2010-09-07 17:10:00 PM', 0.25), (5, 7, '2010-12-08 00:42:18 AM', 0.25), (5, 2, '2011-03-09 08:14:35 AM', 0.25), (5, 10, '2011-06-08 15:46:53 PM', 0.25), (5, 6, '2011-09-07 23:19:10 PM', 0.25), (4, 4, '2011-12-08 06:51:28 AM', 0.75), (4, 9, '2012-09-07 05:28:20 AM', 0.75), (4, 2, '2013-06-08 04:05:13 AM', 0.75), (4, 7, '2014-03-09 02:42:05 AM', 0.75), (4, 0, '2014-12-08 01:18:57 AM', 0.75), (4, 5, '2015-09-07 23:55:50 PM', 0.75), (4, 10, '2016-06-07 22:32:42 PM', 0.75), (4, 3, '2017-03-08 21:09:34 PM', 0.75), (4, 8, '2017-12-07 19:46:27 PM', 0.75), (4, 1, '2018-09-07 18:23:19 PM', 0.75), (4, 6, '2019-06-08 17:00:12 PM', 0.75), (4, 11, '2020-03-08 15:37:04 PM', 0.75), (3, 3, '2020-12-07 14:13:56 PM', 0.25), (3, 2, '2021-03-08 21:46:14 PM', 0.25), (3, 1, '2021-06-08 05:18:31 AM', 0.25), (3, 0, '2021-09-07 12:50:49 PM', 0.25), (3, 11, '2021-12-07 20:23:06 PM', 0.25), (3, 10, '2022-03-09 03:55:24 AM', 0.25), (3, 9, '2022-06-08 11:27:41 AM', 0.25), (3, 8, '2022-09-07 18:59:59 PM', 0.25), (3, 7, '2022-12-08 02:32:16 AM', 0.25), (3, 6, '2023-03-09 10:04:34 AM', 0.25), (3, 5, '2023-06-08 17:36:51 PM', 0.25), (3, 4, '2023-09-08 01:09:08 AM', 0.25), (2, 2, '2023-12-08 08:41:26 AM', 0.83), (2, 6, '2024-10-07 17:49:04 PM', 0.83), (2, 10, '2025-08-08 02:56:42 AM', 0.83), (2, 3, '2026-06-08 12:04:21 PM', 0.83), (2, 7, '2027-04-08 21:11:59 PM', 0.83), (2, 11, '2028-02-07 06:19:37 AM', 0.83), (2, 4, '2028-12-07 15:27:15 PM', 0.83), (2, 8, '2029-10-08 00:34:53 AM', 0.83), (2, 0, '2030-08-08 09:42:32 AM', 0.83), (2, 5, '2031-06-08 18:50:10 PM', 0.83), (2, 9, '2032-04-08 03:57:48 AM', 0.83), (2, 1, '2033-02-06 13:05:26 PM', 0.83), (1, 1, '2033-12-07 22:13:04 PM', 0.42), (1, 8, '2034-05-09 02:46:54 AM', 0.42), (1, 3, '2034-10-08 07:20:43 AM', 0.42), (1, 10, '2035-03-09 11:54:32 AM', 0.42), (1, 5, '2035-08-08 16:28:21 PM', 0.42), (1, 0, '2036-01-07 21:02:10 PM', 0.42), (1, 7, '2036-06-08 01:35:59 AM', 0.42), (1, 2, '2036-11-07 06:09:48 AM', 0.42), (1, 9, '2037-04-08 10:43:37 AM', 0.42), (1, 4, '2037-09-07 15:17:26 PM', 0.42), (1, 11, '2038-02-06 19:51:15 PM', 0.42), (1, 6, '2038-07-09 00:25:05 AM', 0.42), (0, 0, '2038-12-08 04:58:54 AM', 0.67), (0, 1, '2039-08-08 17:05:00 PM', 0.67), (0, 2, '2040-04-08 05:11:07 AM', 0.67), (0, 3, '2040-12-07 17:17:13 PM', 0.67), (0, 4, '2041-08-08 05:23:20 AM', 0.67), (0, 5, '2042-04-08 17:29:27 PM', 0.67), (0, 6, '2042-12-08 05:35:33 AM', 0.67), (0, 7, '2043-08-08 17:41:40 PM', 0.67), (0, 8, '2044-04-08 05:47:46 AM', 0.67), (0, 9, '2044-12-07 17:53:53 PM', 0.67), (0, 10, '2045-08-08 05:59:59 AM', 0.67), (0, 11, '2046-04-08 18:06:06 PM', 0.67), (11, 11, '2046-12-08 06:12:12 AM', 0.75), (11, 7, '2047-09-08 04:49:05 AM', 0.75), (11, 3, '2048-06-08 03:25:57 AM', 0.75), (11, 10, '2049-03-09 02:02:50 AM', 0.75), (11, 6, '2049-12-08 00:39:42 AM', 0.75), (11, 2, '2050-09-07 23:16:34 PM', 0.75), (11, 9, '2051-06-08 21:53:27 PM', 0.75), (11, 5, '2052-03-08 20:30:19 PM', 0.75), (11, 1, '2052-12-07 19:07:12 PM', 0.75), (11, 8, '2053-09-07 17:44:04 PM', 0.75), (11, 4, '2054-06-08 16:20:56 PM', 0.75), (11, 0, '2055-03-09 14:57:49 PM', 0.75), (10, 10, '2055-12-08 13:34:41 PM', 0.92), (10, 3, '2056-11-07 09:13:05 AM', 0.92), (10, 8, '2057-10-08 04:51:29 AM', 0.92), (10, 1, '2058-09-08 00:29:53 AM', 0.92), (10, 6, '2059-08-08 20:08:17 PM', 0.92), (10, 11, '2060-07-08 15:46:41 PM', 0.92), (10, 4, '2061-06-08 11:25:05 AM', 0.92), (10, 9, '2062-05-09 07:03:29 AM', 0.92), (10, 2, '2063-04-09 02:41:53 AM', 0.92), (10, 7, '2064-03-08 22:20:17 PM', 0.92), (10, 0, '2065-02-06 17:58:41 PM', 0.92), (10, 5, '2066-01-07 13:37:05 PM', 0.92), (9, 9, '2066-12-08 09:15:29 AM', 0.17), (9, 8, '2067-02-07 06:17:01 AM', 0.17), (9, 7, '2067-04-09 03:18:33 AM', 0.17), (9, 6, '2067-06-09 00:20:04 AM', 0.17), (9, 5, '2067-08-08 21:21:36 PM', 0.17), (9, 4, '2067-10-08 18:23:08 PM', 0.17), (9, 3, '2067-12-08 15:24:39 PM', 0.17), (9, 2, '2068-02-07 12:26:11 PM', 0.17), (9, 1, '2068-04-08 09:27:43 AM', 0.17), (9, 0, '2068-06-08 06:29:14 AM', 0.17), (9, 11, '2068-08-08 03:30:46 AM', 0.17), (9, 10, '2068-10-08 00:32:18 AM', 0.17), (8, 8, '2068-12-07 21:33:49 PM', 1.0), (8, 0, '2069-12-08 03:42:59 AM', 1.0), (8, 4, '2070-12-08 09:52:09 AM', 1.0), (8, 9, '2071-12-08 16:01:19 PM', 1.0), (8, 1, '2072-12-07 22:10:29 PM', 1.0), (8, 5, '2073-12-08 04:19:38 AM', 1.0), (8, 10, '2074-12-08 10:28:48 AM', 1.0), (8, 2, '2075-12-08 16:37:58 PM', 1.0), (8, 6, '2076-12-07 22:47:08 PM', 1.0), (8, 11, '2077-12-08 04:56:18 AM', 1.0), (8, 3, '2078-12-08 11:05:28 AM', 1.0), (8, 7, '2079-12-08 17:14:38 PM', 1.0), (7, 7, '2080-12-07 23:23:47 PM', 0.75), (7, 2, '2081-09-07 22:00:40 PM', 0.75), (7, 9, '2082-06-08 20:37:32 PM', 0.75), (7, 4, '2083-03-09 19:14:25 PM', 0.75), (7, 11, '2083-12-08 17:51:17 PM', 0.75), (7, 6, '2084-09-07 16:28:09 PM', 0.75), (7, 1, '2085-06-08 15:05:02 PM', 0.75), (7, 8, '2086-03-09 13:41:54 PM', 0.75), (7, 3, '2086-12-08 12:18:46 PM', 0.75), (7, 10, '2087-09-08 10:55:39 AM', 0.75), (7, 5, '2088-06-08 09:32:31 AM', 0.75), (7, 0, '2089-03-09 08:09:24 AM', 0.75)]
@@ -6361,7 +6363,7 @@ def aayu_test():
     test_example('total duration',59.12,round(sum([row[-1] for row in yd]),2))
     exp = [58.67, 59.17, 54.01]
     for aayu_type in range(3):
-        test_example(chapter,exp[aayu_type],round(aayu.longevity(jd, place, aayu_type=aayu_type, method=2)[0],2))
+        test_example(chapter,exp[aayu_type],round(aayu.longevity(jd, place, aayur_type=aayu_type, method=2)[0],2))
     
     _,yd = aayu.get_dhasa_antardhasa(jd,place,dhasa_level_index=const.MAHA_DHASA_DEPTH.DEHA,
                                      method=_dhasa_method,apply_haranas=True,round_duration=False)
@@ -7983,11 +7985,6 @@ def all_unit_tests():
     eclipse_tests()
     nakshathra_dhasa_progression_tests()
     running_dhasa_tests()
-    #sequence_total, executed_total, failed, failed_str, pass_pct, skipped_total = test_helper.get_test_stats()
-    #if executed_total == 0:
-    #    print("No tests executed.")
-    #else:
-    #    print(f"Total Tests {executed_total} #Failed Tests {failed}  Tests Passed (%) {pass_pct} %", failed_str)
 def some_tests_only():
     global _total_tests, _failed_tests, _failed_tests_str
     _total_tests = 0
@@ -8004,12 +8001,12 @@ def some_tests_only():
 if __name__ == "__main__":
     """ So far we have 8008 tests ~ 750 seconds """
     run_ayanamsa_mode = "LAHIRI"#"TRUE_PUSHYA"#
-    BASELINE_MODE = 'record'  # 'record' to capture expected, 'compare' to verify, 'none' disables baseline
+    BASELINE_MODE = 'compare'  # 'record' to capture expected, 'compare' to verify, 'none' disables baseline
     _BASELINE_WRITE_MODE = 'actual' # 'expected' | 'actual'
     """ This should be set to True only if BASELINE_MODE='none' and you want some_tests_only() to be run """
     _RUN_PARTIAL_TESTS_ONLY = False #True # 
     test_helper.set_stop_on_fail(True)
-    #test_helper.set_subset(ranges=[(7953,8009)],verbose_skip=True)
+    #test_helper.set_subset(ranges=[(962,964)],verbose_skip=True)
 
     if run_ayanamsa_mode.upper() == "TRUE_PUSHYA":
         const._use_true_nodes_for_rahu_ketu = True
@@ -8052,6 +8049,7 @@ if __name__ == "__main__":
         f"Subset ranges        : {subset_cfg['ranges']}",
         f"Subset end index     : {subset_cfg['subset_end_index']}",
         f"Subset desc_contains : {subset_cfg['desc_contains']}",
+        f"Subset test functions: {subset_cfg['test_functions']}",
     ]
     confirm_configuration_before_run = True
     if confirm_configuration_before_run:
