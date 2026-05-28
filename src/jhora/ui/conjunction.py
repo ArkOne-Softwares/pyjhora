@@ -562,6 +562,9 @@ class GeneralConjunctionDialog(QDialog):
         self._planet2 = const._ascendant_symbol if self._planet2_combo.currentIndex()==0 else utils.PLANET_NAMES.index(self._planet2_combo.currentText())
         panchanga_place = self.Place
         direction = 1 if self._after_before_combo.currentIndex()==0 else -1
+        y,m,d = map(int,self._dob_text.text().split(",")); dob=drik.Date(y,m,d)
+        hh,mm,ss = map(int,self._tob_text.text().split(":")); tob=(hh,mm,ss)
+        self._current_date_jd = utils.julian_day_number(dob,tob)
         start_jd = self._current_date_jd + direction* (1/(24*60*60))
         ret = drik.next_conjunction_of_planet_pair(self._current_date_jd,panchanga_place, self._planet1, self._planet2, direction=direction,separation_angle=self._separation_angle)
         self._separation_angle_index = self._sep_angle_combo.currentIndex()
@@ -643,9 +646,9 @@ class GeneralConjunctionDialog(QDialog):
         direction = 1 if self._after_before_combo.currentIndex()==0 else -1
         start_jd = self._current_date_jd + direction* (1/(24*60*60))
         self._raasi = None if self._raasi_combo.currentIndex()==0 else self._raasi_combo.currentIndex()
-        (y,m,d,fh),p1_long = drik.next_planet_entry_date(self._planet1,start_jd,panchanga_place,
+        cur_jd,p1_long = drik.next_planet_entry_date(self._planet1,start_jd,panchanga_place,
                                                      direction=direction,raasi=self._raasi)
-        cur_jd = utils.julian_day_number(drik.Date(y,m,d),(fh,0,0))
+        y,m,d,fh = utils.jd_to_gregorian(cur_jd)
         self._conjunction_date_jd = cur_jd; self._current_date_jd = cur_jd
         results = self._planet1_combo.currentText()+' '
         p1_rasi,p1_long = drik.dasavarga_from_long(p1_long, divisional_chart_factor=1)
