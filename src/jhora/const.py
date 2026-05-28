@@ -47,6 +47,18 @@ class PLACE_DATABASE_ENGINE:
     CSV_500_IN = 10     # CSV countries > 500 population PLUS All Indian Cities Population >= 0
     PICKLE_500_IN = 11  # PICKLE countries > 500 population PLUS All Indian Cities Population >= 0
     SQLITE_500_IN = 12  # SQLITE countries > 500 population PLUS All Indian Cities Population >= 0
+    CSV_1K = 13         # CSV countries >1000 population
+    PICKLE_1K = 14      # Pickle countries >1000 population
+    SQLITE_1K = 15      # SQLite countries >1000 population
+    CSV_1K_IN = 16     # CSV countries > 1000 population PLUS All Indian Cities Population >= 0
+    PICKLE_1K_IN = 17  # PICKLE countries > 1000 population PLUS All Indian Cities Population >= 0
+    SQLITE_1K_IN = 18  # SQLITE countries > 1000 population PLUS All Indian Cities Population >= 0
+    CSV_10K = 19         # CSV countries >10000 population
+    PICKLE_10K = 20      # Pickle countries >10000 population
+    SQLITE_10K = 21      # SQLite countries >10000 population
+    CSV_10K_IN = 22     # CSV countries > 10000 population PLUS All Indian Cities Population >= 0
+    PICKLE_10K_IN = 23  # PICKLE countries > 10000 population PLUS All Indian Cities Population >= 0
+    SQLITE_10K_IN = 24  # SQLITE countries > 10000 population PLUS All Indian Cities Population >= 0
 _PLACE_DATABASE_FILES = {
     PLACE_DATABASE_ENGINE.NONE: None,
     PLACE_DATABASE_ENGINE.CSV_5K: "geonames_places_5k.csv",
@@ -61,6 +73,18 @@ _PLACE_DATABASE_FILES = {
     PLACE_DATABASE_ENGINE.CSV_500_IN: "geonames_places_500_IN.csv",
     PLACE_DATABASE_ENGINE.PICKLE_500_IN: "geonames_places_500_IN.pkl",
     PLACE_DATABASE_ENGINE.SQLITE_500_IN: "geonames_places_500_IN.db",
+    PLACE_DATABASE_ENGINE.CSV_1K: "geonames_places_1K.csv",
+    PLACE_DATABASE_ENGINE.PICKLE_1K: "geonames_places_1K.pkl",
+    PLACE_DATABASE_ENGINE.SQLITE_1K: "geonames_places_1K.db",
+    PLACE_DATABASE_ENGINE.CSV_1K_IN: "geonames_places_1K_IN.csv",
+    PLACE_DATABASE_ENGINE.PICKLE_1K_IN: "geonames_places_1K_IN.pkl",
+    PLACE_DATABASE_ENGINE.SQLITE_1K_IN: "geonames_places_1K_IN.db",
+    PLACE_DATABASE_ENGINE.CSV_10K: "geonames_places_10K.csv",
+    PLACE_DATABASE_ENGINE.PICKLE_10K: "geonames_places_10K.pkl",
+    PLACE_DATABASE_ENGINE.SQLITE_10K: "geonames_places_10K.db",
+    PLACE_DATABASE_ENGINE.CSV_10K_IN: "geonames_places_10K_IN.csv",
+    PLACE_DATABASE_ENGINE.PICKLE_10K_IN: "geonames_places_10K_IN.pkl",
+    PLACE_DATABASE_ENGINE.SQLITE_10K_IN: "geonames_places_10K_IN.db",
 }
 database_engine = PLACE_DATABASE_ENGINE.SQLITE_5K
 _place_database_file = None
@@ -92,6 +116,8 @@ _degree_symbol = "°"
 _minute_symbol = u'\u2019'
 _second_symbol = '"'
 _retrogade_symbol = '℞'
+_stationary_symbol = 'Ꞩ' #"\ua7a8"
+ret_stat_symbols = {-1:_retrogade_symbol,0:_stationary_symbol,1:''} # V4.8.6
 _ascendant_symbol = 'L'
 " Planet names mapped to swiss ephemerides "
 _use_true_nodes_for_rahu_ketu = True
@@ -468,7 +494,7 @@ _friendly_planets = [[1,2,4],[0,3],[0,1,4],[0,5],[0,1,2],[3,6],[3,5]]
 _neutral_planets = [[3],[2,4,5,6],[5,6],[2,4,6],[6],[2,4],[4]]
 _enemy_planets = [[5,6],[],[3],[1],[3,5],[0,1],[0,1,2]]
 #"""
-house_owners = np.where(np.array(house_strengths_of_planets).transpose()==_OWNER_RULER)[1]
+house_owners = np.where(np.array(house_strengths_of_planets).transpose()==_OWNER_RULER)[1].tolist() # V4.8.6
 _house_owners_list = [2,5,3,1,0,3,5,2,4,6,6,4]
 planet_deep_exaltation_longitudes = [10.0,33.0,298.0,165.0,95.0,357.0,200.0]
 planet_deep_exaltation_tolerance = 1.0 # 1 degree
@@ -1260,7 +1286,7 @@ tamil_month_method = 3
 #### Enable / Disable World City Checking
 check_database_for_world_cities = True
 use_internet_for_location_check = True
-one_second_lontitude_in_degrees = 1.0/3600.
+one_arc_second = 1.0/3600.
 """ To match Pramaadhi (North Indian) or Prabhava (South Indian) Set ONLY ONE of the below to True.
     Or If you dont like this experiment set both to False
     This means before Kali Year 4099 - i.e. 908AD - The South And North do not share year names
@@ -1397,7 +1423,23 @@ class MANDOOKA_TYPE:
 class PADHANADHAMSA_TYPE:
     IRANGATTI_RANGACHARYA = 1
     SANJAY_RATH = 2
-    PVR_JHORA = 3    
+    PVR_JHORA = 3
+# ============================================================
+# Dhasa Method defaults
+# ============================================================
+ASHTAKAVARGA_DHASA_METHOD_DEFAULT = ASHTAKAVARGA_DHASA_METHOD.SAV_SIGN
+ASHTAKAVARGA_DHASA_START_RULE_DEFAULT = ASHTAKAVARGA_DHASA_START_RULE.MAX_STRENGTH
+ASHTAKAVARGA_DHASA_SEQUENCE_RULE_DEFAULT = ASHTAKAVARGA_DHASA_SEQUENCE_RULE.STRENGTH_ORDER
+
+AAYU_TYPE_DEFAULT = AAYU_TYPE.NONE
+RASHMI_TYPE_DEFAULT = RASHMI_TYPE.BPHS_HIGHEST_RAY
+TARA_TYPE_DEFAULT = TARA_TYPE.SANJAY_RATH
+CHARA_TYPE_DEFAULT = CHARA_TYPE.KN_RAO
+DRIG_TYPE_DEFAULT = DRIG_TYPE.PVR_PAPER
+KALACHAKRA_TYPE_DEFAULT = KALACHAKRA_TYPE.PVR_BOOK
+MANDOOKA_TYPE_DEFAULT = MANDOOKA_TYPE.KN_RAO
+PADHANADHAMSA_TYPE_DEFAULT = PADHANADHAMSA_TYPE.IRANGATTI_RANGACHARYA
+
 _chart_names = ['raasi_str','hora_str','drekkanam_str','chaturthamsa_str','panchamsa_str',
               'shashthamsa_str','saptamsam_str','ashtamsa_str','navamsam_str','dhasamsam_str','rudramsa_str',
               'dhwadamsam_str','shodamsa_str','vimsamsa_str','chaturvimsamsa_str','nakshatramsa_str','thrisamsam_str',
@@ -1605,6 +1647,70 @@ dhasa_year_duration_default = DHASA_YEAR_DURATION.JHORA_DEFAULT
 apply_daylight_savings_correction = True
 ## If True every UI tab will expanded when saved as PDF. False only Kundali and last 4 tabs expanded.
 expand_all_tabs_to_save_as_pdf = False
+
+# ============================================================
+# Swiss Ephemeris / astronomy configuration defaults
+# ============================================================
+
+# Planet positions:
+#   True  -> geocentric
+#   False -> topocentric (requires swe.set_topo(lon, lat, alt_m))
+PLANET_POSITIONS_GEOCENTRIC = True
+
+# Position type:
+#   False -> apparent positions
+#   True  -> true positions (FLG_TRUEPOS)
+PLANET_POSITIONS_TRUE = True
+
+# These two are only meaningful when PLANET_POSITIONS_TRUE == False
+PLANET_POSITIONS_USE_ABERRATION = True
+PLANET_POSITIONS_USE_DEFLECTION = False
+
+# Nutation is independent of sidereal/tropical
+PLANET_POSITIONS_USE_NUTATION = False
+
+# Rise / Set defaults
+RISE_SET_USE_REFRACTION = False
+RISE_SET_USE_DISC_CENTER_FOR_RISING = True
+RISE_SET_HINDU_RISING = True
+
+# Nodes (you already have this, keep it if present)
+_use_true_nodes_for_rahu_ketu = True
+
+
+# ============================================================
+# Optional setters (nice for config binding; direct attr also works)
+# ============================================================
+
+def set_planet_positions_geocentric(value: bool) -> None:
+    global PLANET_POSITIONS_GEOCENTRIC
+    PLANET_POSITIONS_GEOCENTRIC = bool(value)
+
+
+def set_planet_positions_true(value: bool) -> None:
+    global PLANET_POSITIONS_TRUE
+    PLANET_POSITIONS_TRUE = bool(value)
+
+
+def set_planet_positions_use_aberration(value: bool) -> None:
+    global PLANET_POSITIONS_USE_ABERRATION
+    PLANET_POSITIONS_USE_ABERRATION = bool(value)
+
+
+def set_planet_positions_use_deflection(value: bool) -> None:
+    global PLANET_POSITIONS_USE_DEFLECTION
+    PLANET_POSITIONS_USE_DEFLECTION = bool(value)
+
+
+def set_planet_positions_use_nutation(value: bool) -> None:
+    global PLANET_POSITIONS_USE_NUTATION
+    PLANET_POSITIONS_USE_NUTATION = bool(value)
+
+
+def set_rise_set_use_refraction(value: bool) -> None:
+    global RISE_SET_USE_REFRACTION
+    RISE_SET_USE_REFRACTION = bool(value)
+
 
 if __name__ == "__main__":
     print('graha',len(_graha_dhasa_dict),len(dhasa_default_options))
