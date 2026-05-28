@@ -21,6 +21,11 @@
     utils module
     contains common functions used by various PyJHora modules
 """
+"""
+    Release History:
+    V4.8.6 - count_stars, count_rasis - dir changed direction argument. Revised set_flags_for_planet_positions.
+            added validate_raasi_index and validate_star_index
+"""
 import os
 import codecs
 import warnings
@@ -897,8 +902,8 @@ def get_fraction_old(start_time_hrs,end_time_hrs,birth_time_hrs):
     #print('birth time',birth_time_hrs, 'tithi start',tithi_start_time_hrs,'tithi end',tithi_end_time_hrs,'tithi duration',tl,'tithi fraction',tf)
     return tf
 
-count_stars = lambda from_star,to_star,dir=1,total=27: ((to_star + total - from_star) % total)+1 if dir==1 else ((from_star + total - to_star) % total)+1
-count_rasis = lambda from_rasi,to_rasi,dir=1,total=12: ((to_rasi + total - from_rasi) % total)+1 if dir==1 else ((from_rasi + total - to_rasi) % total)+1
+count_stars = lambda from_star,to_star,direction=1,total=27: ((total + direction * (to_star - from_star)) % total)+1
+count_rasis = lambda from_rasi,to_rasi,direction=1,total=12: ((total + direction * (to_rasi - from_rasi)) % total)+1
 def parivritti_even_reverse(dcf,dirn=1):
     """
         generates parivritti tuple (rasi_sign, hora_portion_of_varga, varga_sign)
@@ -1681,7 +1686,7 @@ def kp_lords_for_longitude(
 
     return {planet_label: out}
 """ KP Lord Calculation Functions End here """
-def set_flags_for_planet_positions(
+def _set_flags_for_planet_positions(
     *,
     sidereal_positions: bool = True,          # False = tropical
     geometric_positions: bool = True,         # False = topocentric (observer-based)
@@ -1705,26 +1710,175 @@ def set_flags_for_planet_positions(
     if not use_nutation: flags |= swe.FLG_NONUT
     if include_speed: flags |= swe.FLG_SPEED
     return flags
+
+def set_flags_for_planet_positions(
+    *,
+    sidereal_positions: bool = True,               # False = tropical
+    geocentric_positions: bool | None = None,      # preferred new name
+    geometric_positions: bool | None = None,       # backward-compatible alias
+    true_positions: bool | None = None,            # False = apparent, True = true
+    use_aberration_of_light: bool | None = None,   # False -> disable aberration
+    use_gravitational_deflection: bool | None = None,  # True to include deflection
+    use_nutation: bool | None = None,              # True to include nutation
+    include_default_engine: bool = True,
+    include_speed: bool = True,
+) -> int:
+    """
+    Return flags for swe_calc* (planetary positions).
+
+    Priority:
+      1. Explicit function argument
+      2. backward-compatible alias (geometric_positions)
+      3. jhora.const runtime setting
+      4. original historical default from PyJHora
+    """
+    flags = 0
+
+    # --------------------------------------------------
+    # Geo / Topo
+    # Original default: geometric_positions=True
+    # --------------------------------------------------
+    if geocentric_positions is None:
+        if geometric_positions is not None:
+            geocentric_positions = bool(geometric_positions)
+        else:
+            geocentric_positions = bool(
+                getattr(const, "PLANET_POSITIONS_GEOCENTRIC", True)
+            )
+    # --------------------------------------------------
+    # True / Apparent
+    # Original default: true_positions=True
+    # --------------------------------------------------
+    if true_positions is None:
+        true_positions = bool(
+            getattr(const, "PLANET_POSITIONS_TRUE", True)
+        )
+
+    # --------------------------------------------------
+    # Aberration
+    # Original default: use_aberration_of_light=True
+    # --------------------------------------------------
+    if use_aberration_of_light is None:
+        use_aberration_of_light = bool(
+            getattr(const, "PLANET_POSITIONS_USE_ABERRATION", True)
+        )
+
+    # --------------------------------------------------
+    # Gravitational deflection
+    # Original default: use_gravitational_deflection=False
+    # --------------------------------------------------
+    if use_gravitational_deflection is None:
+        use_gravitational_deflection = bool(
+            getattr(const, "PLANET_POSITIONS_USE_DEFLECTION", False)
+        )
+
+    # --------------------------------------------------
+    # Nutation
+    # Original default: use_nutation=False
+    # --------------------------------------------------
+    if use_nutation is None:
+        use_nutation = bool(
+            getattr(const, "PLANET_POSITIONS_USE_NUTATION", False)
+        )
+
+    # --------------------------------------------------
+    # Build flags
+    # --------------------------------------------------
+    if include_default_engine:
+        flags |= swe.FLG_SWIEPH
+
+    if sidereal_positions:
+        flags |= swe.FLG_SIDEREAL
+
+    if not geocentric_positions:
+        flags |= swe.FLG_TOPOCTR  # remember to call swe.set_topo(...)
+
+    if true_positions:
+        flags |= swe.FLG_TRUEPOS
+
+    # keep original semantics:
+    # if user says "do not use aberration", set NOABERR
+    if not use_aberration_of_light:
+        flags |= swe.FLG_NOABERR
+
+    # original semantics:
+    # if user says "do not use gravitational deflection", set NOGDEFL
+    if not use_gravitational_deflection:
+        flags |= swe.FLG_NOGDEFL
+
+    # original semantics:
+    # if user says "do not use nutation", set NONUT
+    if not use_nutation:
+        flags |= swe.FLG_NONUT
+
+    if include_speed:
+        flags |= swe.FLG_SPEED
+
+    return flags
+
+def apply_topocentric_observer_if_needed(longitude: float, latitude: float, altitude_m: float = 0.0) -> None:
+    """
+    Call swe.set_topo(...) only if current config requires topocentric positions.
+    altitude_m must be in meters.
+    """
+    if not bool(getattr(const, "PLANET_POSITIONS_GEOCENTRIC", True)):
+        swe.set_topo(longitude, latitude, altitude_m)
+
 def set_flags_for_rise_set(
     *,
-    flags_for_rise=True, # Flags for Rise ; False => Flags for set
-    use_disc_center_for_rising: bool = True,  # False -> disc bottom (standard)
-    use_refraction: bool = False,             # True to use refraction
-    hindu_rising: bool = True,               # If True, apply SE_HINDU_RISING preset
+    flags_for_rise: bool = True,                   # True -> rise, False -> set
+    use_disc_center_for_rising: bool | None = None,
+    use_refraction: bool | None = None,
+    hindu_rising: bool | None = None,
 ) -> int:
     """
     Return flags for swe_rise_transit / swe_rise_transit_ex.
+
+    Two main user-controlled dimensions:
+      1. Disc reference:
+         - center
+         - bottom
+      2. Horizon model:
+         - with refraction (apparent horizon)
+         - without refraction (true horizon)
+
+    Plus optional Hindu rising convention.
     """
+    if use_disc_center_for_rising is None:
+        use_disc_center_for_rising = bool(
+            getattr(const, "RISE_SET_USE_DISC_CENTER_FOR_RISING", True)
+        )
+
+    if use_refraction is None:
+        use_refraction = bool(
+            getattr(const, "RISE_SET_USE_REFRACTION", False)
+        )
+
+    if hindu_rising is None:
+        hindu_rising = bool(
+            getattr(const, "RISE_SET_HINDU_RISING", True)
+        )
+
     flags = 0
-    if hindu_rising: flags |= swe.BIT_HINDU_RISING
+
+    if hindu_rising:
+        flags |= swe.BIT_HINDU_RISING
+
     if not use_refraction:
         flags |= swe.BIT_NO_REFRACTION
-    else: flags &= ~swe.BIT_NO_REFRACTION
+    else:
+        flags &= ~swe.BIT_NO_REFRACTION
+
     flags |= swe.BIT_DISC_CENTER if use_disc_center_for_rising else swe.BIT_DISC_BOTTOM
+
     flags &= ~(swe.CALC_RISE | swe.CALC_SET | swe.CALC_MTRANSIT | swe.CALC_ITRANSIT)
     flags |= swe.CALC_RISE if flags_for_rise else swe.CALC_SET
+
     return flags
+
+
 set_flag_for_calendar = lambda jd: swe.GREG_CAL if jd >= const._JULIAN_TRANSITION_DAY else swe.JUL_CAL
+
 def secant_interpolation(x,y,y0):
     x0 = 0
     for i in range(len(y) - 1):
@@ -2608,6 +2762,12 @@ class Profiler:
         total = perf_counter() - self.marks[label]["_start"]
         print(f"[PROFILE] {label}: finished in {total:.3f}s")
         del self.marks[label]
+def validate_star_index(star,min_index=1,max_index=27):
+    if not (min_index <= star <= max_index):
+        raise ValueError(f"star must be in range of {min_index}..{max_index}")
+def validate_raasi_index(raasi,min_index=1,max_index=12):
+    if not (min_index <= raasi <= max_index):
+        raise ValueError(f"Raasi must be in range of {min_index}..{max_index}")
         
 if __name__ == "__main__":
     import time
