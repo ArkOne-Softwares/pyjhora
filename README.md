@@ -1,4 +1,4 @@
-JHora 4.8.5
+JHora 4.8.6
 =================
 Python package containing almost all the features described in the book
 
@@ -98,6 +98,18 @@ Enter Time of birth, choose chart style, ayanamsa mode, language of display
 Click Show Chart to display the birth (Raasi and Navamsam) charts (every time any imput is changed)
 
 Click Show PDF to save the screen as a PDF file
+
+Changes since 4.8.5
+===================
+* `charts.py` - utils.count_rasis dir argument changed to direction
+* `house.py` -  Error in rudra(planet_positions) fixed.
+* `ashtottari.py` - dhasa start state for Rahu lord fixed
+* `dhasas` - configuration default added for various dhasa like aayu, etc which have more than one method.
+* `info.py` - added call to drik.get_planet_speed_sign - to show show stationay/retrograde planets
+* `drik.py` - get_planet_speed_sign, planets_in_stationary and next_planet_stationary_duration, added to getting stationary planets. next_planet_retrograde_change_date updated
+* `configuration` - Moved hardcoded settings from this file to factory/user settings. Added more data engine options. added configuration planet calculation options (nutation gravitation etc)
+* `utils.py` - count_stars, count_rasis - dir changed direction argument. Revised set_flags_for_planet_positions.added validate_raasi_index and validate_star_index
+* `yoga.py` - data validation and some fixes.
 
 Changes since 4.8.0
 ===================
