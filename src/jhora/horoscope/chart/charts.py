@@ -1375,8 +1375,6 @@ def planets_in_retrograde(planet_positions):
         NOTE: USE THIS FUNCTION ONLY IF YOU HAVE TO PASS planet_positions as argument
         OTHERWISE FOR ACCURATE RESULTS use drik.planets_in_retrograde(jd, place)
     """
-    if const.planet_retrogression_calculation_method == 1:
-        return _planets_in_retrograde_old(planet_positions)
     retrograde_planets = []
     sun_long = planet_positions[1][1][0]*30+planet_positions[1][1][1]
     for p,(h,p_long) in planet_positions[const.MARS_ID+1:const.RAHU_ID+1]: # Exclude Lagna, Sun,Moon,, Rahu and Ketu

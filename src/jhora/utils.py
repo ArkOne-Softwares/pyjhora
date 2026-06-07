@@ -1796,8 +1796,7 @@ def set_flags_for_planet_positions(
     if true_positions:
         flags |= swe.FLG_TRUEPOS
 
-    # keep original semantics:
-    # if user says "do not use aberration", set NOABERR
+    # For true positions aberration and deflection flags are ignored by Swiss Ephemeris
     if not use_aberration_of_light:
         flags |= swe.FLG_NOABERR
 

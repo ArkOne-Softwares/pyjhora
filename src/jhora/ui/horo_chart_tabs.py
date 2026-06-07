@@ -402,9 +402,9 @@ class ChartTabbed(QWidget):
         This avoids paying the full translation/combo rebuild cost on every compute.
         """
         current_lang = self._language
-        if getattr(self, "_last_ui_language", None) != current_lang:
-            self._update_main_window_label_and_tooltips()
-            self._last_ui_language = current_lang
+        #if getattr(self, "_last_ui_language", None) != current_lang:
+        self._update_main_window_label_and_tooltips()
+        self._last_ui_language = current_lang
     def _open_options_dialog(self):
         """
         Open ConfigDialog. If saved, mark inputs changed so Show Chart becomes bold.
@@ -813,7 +813,7 @@ class ChartTabbed(QWidget):
         v_layout = QVBoxLayout()
         h_layout1 = QHBoxLayout()
         self._sphuta_chart_combo = QComboBox()
-        self._sphuta_chart_combo.addItems(_chart_names)
+        self._sphuta_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._sphuta_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._sphuta_chart_combo.currentIndexChanged.connect(self._sphuta_chart_selection_changed)
         h_layout1.addWidget(self._sphuta_chart_combo)        
@@ -998,7 +998,7 @@ class ChartTabbed(QWidget):
         v_layout = QVBoxLayout()
         h_layout1 = QHBoxLayout()
         self._arudha_chart_combo = QComboBox()
-        self._arudha_chart_combo.addItems(_chart_names)
+        self._arudha_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._arudha_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._arudha_chart_combo.currentIndexChanged.connect(self._graha_arudha_chart_selection_changed)
         h_layout1.addWidget(self._arudha_chart_combo)        
@@ -1386,7 +1386,7 @@ class ChartTabbed(QWidget):
         #"""
         h_layout1 = QHBoxLayout()
         self._bhava_chart_combo = QComboBox()
-        self._bhava_chart_combo.addItems(_chart_names)
+        self._bhava_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._bhava_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._bhava_chart_combo.currentIndexChanged.connect(self._bhava_chart_selection_changed)
         h_layout1.addWidget(self._bhava_chart_combo)
@@ -1551,7 +1551,7 @@ class ChartTabbed(QWidget):
         #"""
         h_layout1 = QHBoxLayout()
         self._chakra_chart_combo = QComboBox()
-        self._chakra_chart_combo.addItems(_chart_names)
+        self._chakra_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._chakra_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._chakra_chart_combo.currentIndexChanged.connect(self._chakra_chart_selection_changed)
         h_layout1.addWidget(self._chakra_chart_combo)
@@ -1699,7 +1699,7 @@ class ChartTabbed(QWidget):
         v_layout = QVBoxLayout()
         h_layout1 = QHBoxLayout()
         self._kpinfo_chart_combo = QComboBox()
-        self._kpinfo_chart_combo.addItems(_chart_names)
+        self._kpinfo_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._kpinfo_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._kpinfo_chart_combo.currentIndexChanged.connect(self._kpinfo_chart_selection_changed)
         h_layout1.addWidget(self._kpinfo_chart_combo)
@@ -1841,7 +1841,7 @@ class ChartTabbed(QWidget):
         v_layout = QVBoxLayout()
         h_layout1 = QHBoxLayout()
         self._kundali_chart_combo = QComboBox()
-        self._kundali_chart_combo.addItems(_chart_names)
+        self._kundali_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._kundali_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._kundali_chart_combo.currentIndexChanged.connect(self._kundali_chart_selection_changed)
         h_layout1.addWidget(self._kundali_chart_combo)
@@ -1997,7 +1997,7 @@ class ChartTabbed(QWidget):
         self._saham_table2 = QTableWidget(18,2); self._saham_table2.verticalHeader().setVisible(False)
         h_layout1 = QHBoxLayout()
         self._saham_chart_combo = QComboBox()
-        self._saham_chart_combo.addItems(_chart_names)
+        self._saham_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._saham_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._saham_chart_combo.currentIndexChanged.connect(self._saham_chart_selection_changed)
         h_layout1.addWidget(self._saham_chart_combo)
@@ -2154,7 +2154,7 @@ class ChartTabbed(QWidget):
         self._drishti_table2 = QTableWidget(9,3) 
         h_layout1 = QHBoxLayout()
         self._drishti_chart_combo = QComboBox()
-        self._drishti_chart_combo.addItems(_chart_names)
+        self._drishti_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._drishti_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._drishti_chart_combo.currentIndexChanged.connect(self._drishti_chart_selection_changed)
         h_layout1.addWidget(self._drishti_chart_combo)
@@ -2356,7 +2356,7 @@ class ChartTabbed(QWidget):
         self._argala_table2 = QTableWidget(12,4) 
         h_layout1 = QHBoxLayout()
         self._argala_chart_combo = QComboBox()
-        self._argala_chart_combo.addItems(_chart_names)
+        self._argala_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._argala_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._argala_chart_combo.currentIndexChanged.connect(self._argala_chart_selection_changed)
         h_layout1.addWidget(self._argala_chart_combo)
@@ -2511,7 +2511,7 @@ class ChartTabbed(QWidget):
         v_layout = QVBoxLayout()
         h_layout1 = QHBoxLayout()
         self._shodhaya_chart_combo = QComboBox()
-        self._shodhaya_chart_combo.addItems(_chart_names)
+        self._shodhaya_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._shodhaya_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._shodhaya_chart_combo.currentIndexChanged.connect(self._shodhaya_chart_selection_changed)
         h_layout1.addWidget(self._shodhaya_chart_combo)
@@ -2670,7 +2670,7 @@ class ChartTabbed(QWidget):
         v_layout = QVBoxLayout()
         h_layout1 = QHBoxLayout()
         self._ashtaka_chart_combo = QComboBox()
-        self._ashtaka_chart_combo.addItems(_chart_names)
+        self._ashtaka_chart_combo.addItems([self.resources[c] for c in _chart_names])
         self._ashtaka_chart_combo.SizeAdjustPolicy.AdjustToContents
         self._ashtaka_chart_combo.currentIndexChanged.connect(self._ashtaka_chart_selection_changed)
         h_layout1.addWidget(self._ashtaka_chart_combo)
@@ -3136,7 +3136,7 @@ class ChartTabbed(QWidget):
             elif entry_type==conjunction.DialogEntryType.NAKSHATHRA_DHASA_PROGRESSION:
                 self._dhasa_progression_jd = dlg._current_date_jd
                 self.dhasa_progression_correction = dlg.dhasa_progression_correction
-                self.dhasa_start_planet = dlg._planet1
+                self.dhasa_start_planet = dlg._dhasa_planet
         else:
             # Reset   pravesha_combo selection to 0
             self._pravesha_combo.setCurrentIndex(0)
@@ -3227,13 +3227,13 @@ class ChartTabbed(QWidget):
             if _direction == 1:
                 direction_string = self.resources['previous_str']+' '
                 if _lunar_month_type < _lmd_count:
-                    (_lm_year,_lm_month,_lm_day),_lm_hours = drik.previous_lunar_month(jd, place, _lunar_month_type)
+                    _lm_year,_lm_month,_lm_day,_lm_hours = drik.previous_lunar_month(jd, place, _lunar_month_type)
                 else:
                     (_lm_year,_lm_month,_lm_day),_lm_hours = drik.previous_lunar_year(jd, place, _lunar_month_type-_lmd_count)
             else:
                 direction_string = self.resources['next_str']+' '
                 if _lunar_month_type < _lmd_count:
-                    (_lm_year,_lm_month,_lm_day),_lm_hours = drik.next_lunar_month(jd, place, _lunar_month_type)
+                    _lm_year,_lm_month,_lm_day,_lm_hours = drik.next_lunar_month(jd, place, _lunar_month_type)
                 else:
                     (_lm_year,_lm_month,_lm_day),_lm_hours = drik.next_lunar_year(jd, place, _lunar_month_type-_lmd_count)
             self._date_of_birth = str(_lm_year)+','+str(_lm_month)+','+str(_lm_day)
@@ -4165,7 +4165,11 @@ class ChartTabbed(QWidget):
                     utils.resource_strings['distance_str']+' '+ utils.resource_strings['information_str']
         _planets_info_dict = {key:vl_chart}
         _planets_info_table = QTableWidget(len(drik.planet_list),6)
-        psi = drik.planets_speed_info(jd, place)
+        psi_ur = drik.planets_speed_info(jd, place)
+        psi = {
+            k: type(v)(round(x, const.planet_info_round_factors[i]) for i, x in enumerate(v))
+            for k, v in psi_ur.items()
+        }
         _planets_info_table.setHorizontalHeaderItem(0,QTableWidgetItem(utils.resource_strings['longitude_str']))
         _planets_info_table.setHorizontalHeaderItem(1,QTableWidgetItem(utils.resource_strings['longitude_str']+'\n'+utils.resource_strings['speed_str']))
         _planets_info_table.setHorizontalHeaderItem(2,QTableWidgetItem(utils.resource_strings['latitude_str']))
@@ -7128,8 +7132,6 @@ if __name__ == "__main__":
     sys.excepthook = except_hook
     from jhora import config
     config.initialize_runtime(force_reload=True, silent=False)
-    """ Set include_western_planets=True if you want to include western planets """
-    drik.set_planet_list(set_rahu_ketu_as_true_nodes=True, include_western_planets=False)
     App = QApplication(sys.argv)
     #const._INCLUDE_URANUS_TO_PLUTO = True
     chart = ChartTabbed()

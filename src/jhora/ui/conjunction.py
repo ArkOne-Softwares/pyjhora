@@ -594,48 +594,50 @@ class GeneralConjunctionDialog(QDialog):
         self._results_text.setText(_CALCULATE_WAIT_MSG)
         QApplication.processEvents()
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        place = self.Place
-        y,m,d = map(int,self._dob_text.text().split(",")); dob=drik.Date(y,m,d)
-        hh,mm,ss = map(int,self._tob_text.text().split(":")); tob=(hh,mm,ss)
-        self._current_date_jd = utils.julian_day_number(dob,tob)
-        direction = 1 if self._after_before_combo.currentIndex()==0 else -1
-        jd_local = self._current_date_jd + direction # Add one day
-        _eclipse_location_type = eclipse.EclipseLocation.GLOBAL if self._eclipse_loc==0 else eclipse.EclipseLocation.LOCAL
-        _search_backward = self._after_before_combo.currentIndex()==1 
-        _eclipse_type = int(self._eclipse_type_combo.currentData())
-        _show_where_eclipse = self._show_eclipse_location.isChecked()
-        if self._eclipse==0:
-            _ecl_ret = eclipse.next_solar_eclipse(jd_local, place, _eclipse_location_type, _eclipse_type, _search_backward,
-                                              show_maximum_eclipse_global_location=_show_where_eclipse)
-            _ecl1_str=utils.resource_strings['solar_str']+' '+ utils.resource_strings['eclipse_str']
-        else:
-            _ecl_ret = eclipse.next_lunar_eclipse(jd_local, place, _eclipse_location_type, _eclipse_type, _search_backward,
-                                              show_maximum_eclipse_global_location=_show_where_eclipse)
-            _ecl1_str=utils.resource_strings['lunar_str']+' '+ utils.resource_strings['eclipse_str']
-        _ecl_loc = None
-        if _show_where_eclipse:
-            _ecl,_ecl_loc = _ecl_ret
-        else:
-            _ecl = _ecl_ret
-        _ecl_jd_str = "[" + ",".join(
-            f"({y},{m},{d},{int(h):02d}:{int(mi):02d}:{int(round(s)):02d})"
-            for y,m,d,fh in _ecl[1] for h,mi,s in (utils.to_dms(fh, as_string=False),)
-        ) + "]"
-        self._eclipse_type_str = _ecl[0]
-        _ecl_results = (f"{utils.resource_strings[_ecl[0] + '_str']} "f"{_ecl1_str} "f"{_ecl_jd_str}")
-        self._results_text.setText(_ecl_results)
-        y,m,d,fh = _ecl[1][0]; hh,mm,ss = utils.to_dms(fh,as_string=False)
-        self._current_date_jd = utils.julian_day_number(drik.Date(y,m,d),(hh,mm,ss))
-        self._dob_text.setText(f"{y},{m:02d},{d:02d}")
-        self._tob_text.setText(f"{hh:02d}:{mm:02d}:{ss:02d}")
-        self._conjunction_date_jd = self._current_date_jd
-        if self._show_eclipse_location.isChecked() and _ecl_loc:
-            import reverse_geocode
-            loc_results = reverse_geocode.get((_ecl_loc[0],_ecl_loc[1]))
-            keys = ["country", "state", "city", "latitude", "longitude"]
-            loc_str = "\n".join(f"{self.res[k+'_str']}: {loc_results[k]}" for k in keys if k in loc_results)
-            QMessageBox.about(self,self.res['eclipse_maximum_location_str'],loc_str)
-        QApplication.restoreOverrideCursor()        
+        try:
+            place = self.Place
+            y,m,d = map(int,self._dob_text.text().split(",")); dob=drik.Date(y,m,d)
+            hh,mm,ss = map(int,self._tob_text.text().split(":")); tob=(hh,mm,ss)
+            self._current_date_jd = utils.julian_day_number(dob,tob)
+            direction = 1 if self._after_before_combo.currentIndex()==0 else -1
+            jd_local = self._current_date_jd + direction # Add one day
+            _eclipse_location_type = eclipse.EclipseLocation.GLOBAL if self._eclipse_loc==0 else eclipse.EclipseLocation.LOCAL
+            _search_backward = self._after_before_combo.currentIndex()==1 
+            _eclipse_type = int(self._eclipse_type_combo.currentData())
+            _show_where_eclipse = self._show_eclipse_location.isChecked()
+            if self._eclipse==0:
+                _ecl_ret = eclipse.next_solar_eclipse(jd_local, place, _eclipse_location_type, _eclipse_type, _search_backward,
+                                                  show_maximum_eclipse_global_location=_show_where_eclipse)
+                _ecl1_str=utils.resource_strings['solar_str']+' '+ utils.resource_strings['eclipse_str']
+            else:
+                _ecl_ret = eclipse.next_lunar_eclipse(jd_local, place, _eclipse_location_type, _eclipse_type, _search_backward,
+                                                  show_maximum_eclipse_global_location=_show_where_eclipse)
+                _ecl1_str=utils.resource_strings['lunar_str']+' '+ utils.resource_strings['eclipse_str']
+            _ecl_loc = None
+            if _show_where_eclipse:
+                _ecl,_ecl_loc = _ecl_ret
+            else:
+                _ecl = _ecl_ret
+            _ecl_jd_str = "[" + ",".join(
+                f"({y},{m},{d},{int(h):02d}:{int(mi):02d}:{int(round(s)):02d})"
+                for y,m,d,fh in _ecl[1] for h,mi,s in (utils.to_dms(fh, as_string=False),)
+            ) + "]"
+            self._eclipse_type_str = _ecl[0]
+            _ecl_results = (f"{utils.resource_strings[_ecl[0] + '_str']} "f"{_ecl1_str} "f"{_ecl_jd_str}")
+            self._results_text.setText(_ecl_results)
+            y,m,d,fh = _ecl[1][0]; hh,mm,ss = utils.to_dms(fh,as_string=False)
+            self._current_date_jd = utils.julian_day_number(drik.Date(y,m,d),(hh,mm,ss))
+            self._dob_text.setText(f"{y},{m:02d},{d:02d}")
+            self._tob_text.setText(f"{hh:02d}:{mm:02d}:{ss:02d}")
+            self._conjunction_date_jd = self._current_date_jd
+            if self._show_eclipse_location.isChecked() and _ecl_loc:
+                import reverse_geocode
+                loc_results = reverse_geocode.get((_ecl_loc[0],_ecl_loc[1]))
+                keys = ["country", "state", "city", "latitude", "longitude"]
+                loc_str = "\n".join(f"{self.res[k+'_str']}: {loc_results[k]}" for k in keys if k in loc_results)
+                QMessageBox.about(self,self.res['eclipse_maximum_location_str'],loc_str)
+        finally:
+            QApplication.restoreOverrideCursor()        
 
     def _find_transit_date(self):
         self._results_text.setText(_CALCULATE_WAIT_MSG)

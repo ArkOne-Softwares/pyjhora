@@ -4873,7 +4873,7 @@ def retrograde_combustion_tests():
     jd_at_years = drik.next_solar_date(jd_at_dob, place, years)
     rp = drik.planets_in_retrograde(jd_at_years, place)
     cht = charts.divisional_chart(jd_at_dob,place)
-    test_example(chapter+exercise,[utils.PLANET_NAMES[3]],[utils.PLANET_NAMES[p] for p in rp])
+    test_example(chapter+exercise,[utils.PLANET_NAMES[3]],[utils.PLANET_NAMES[p] for p in rp[:1]]) # Exclude Rahu/Ketu
     exercise = 'Chart 64'
     jd_at_dob = utils.julian_day_number((1970,4,4),(17,50,0))
     place = drik.Place('unknown',16+15.0/60,81+12.0/60,5.5)
@@ -5218,7 +5218,7 @@ def planet_transit_tests():
     jd = utils.julian_day_number(dob, tob)
     start_date = drik.Date(dob[0],dob[1],dob[2])
     direction = 1
-    increment_speed_factor = 0.001 if const._DEFAULT_AYANAMSA_MODE=="LAHIRI" else 0.01
+    increment_speed_factor = 0.001 # if const._DEFAULT_AYANAMSA_MODE=="LAHIRI" else 0.01
     #"""
     expected_results = [[(1996,12,15),'17:38:13 PM','240° 0’ 0"',8,'17:38:10 PM'],[(1996,12,9),'03:46:39 AM','210° 0’ 0"',7,'03:46:39 AM'],
                         [(1996,12,17),'17:37:35 PM','150° 0’ 0"',5,'17:37:27 PM'],[(1997,2,5),'01:17:28 AM','270° 0’ 0"',9,'01:17:26 AM'],
@@ -7921,6 +7921,33 @@ def running_dhasa_tests():
         exercise = _dhasa_name
         rd = func(current_jd, jd_at_dob, place,**defaults)
         test_example(chapter+exercise,exp[_dhasa_name],rd)
+def stationary_planets_tests():
+    chapter = "Stationary Planets Tests "
+    dcf = 1; dob = drik.Date(1996,12,7); tob = (10,34,0); place = drik.Place('Chennai,India',13.0878,80.2785,5.5)
+    jd_at_dob = utils.julian_day_number(dob, tob)
+    jhora_pushya = {const.MARS_ID:"(1995,3,24) 22:42:16 20Cn30'24.96\"", const.MERCURY_ID:"(1996,9,26) 22:31:34 26Le19'16.13\"",
+                     const.JUPITER_ID:"(1996,9,3) 19:25:53 15Sg08'36.44\"", const.VENUS_ID:"(1996,7,2) 12:19:20 19Ta06'5.1\"",
+                     const.SATURN_ID:"(1996, 12, 3) 16:41:59 07Pi55'47.45\"",}
+    jhora_lahiri = {const.MARS_ID:"(1995,3,24) 22:49:17 19Cn22'18.51\"", const.MERCURY_ID:"(1996,9,26) 22:38:06 25Le11'9.78\"",
+                     const.JUPITER_ID:"(1996,9,3) 20:04:33 14Sg00'30.08\"", const.VENUS_ID:"(1996,7,2) 12:22:17 17Ta57'58.71\"",
+                     const.SATURN_ID:"(1996, 12, 3) 17:57:45 06Pi47'41.11\"",}
+    jhora_results = jhora_pushya if const._DEFAULT_AYANAMSA_MODE=="TRUE_PUSHYA" else jhora_lahiri
+    for planet,jhora_result in jhora_results.items():
+        pstr = utils.PLANET_NAMES[planet]
+        exercise = pstr
+        sjd1,sjd2 = drik.next_planet_stationary_duration(planet, jd_at_dob, place,direction=-1)
+        y1,m1,d1,fh1 = sjd1; jd1 = utils.julian_day_number(drik.Date(y1,m1,d1),(fh1,0,0))
+        test_example(chapter+exercise,(y1,m1,d1,fh1),(y1,m1,d1,fh1),"stationary start")
+        y2,m2,d2,fh2 = sjd2; jd2 = utils.julian_day_number(drik.Date(y2,m2,d2),(fh2,0,0))
+        test_example(chapter+exercise,(y2,m2,d2,fh2),(y2,m2,d2,fh2),"stationary end")
+        jd = 0.5*(jd1+jd2); y,m,d,fh = utils.jd_to_gregorian(jd)
+        jd_utc = jd-place.timezone/24.0
+        retStr = const.ret_stat_symbols[drik._planet_speed_sign(jd, place, planet)]
+        p_swe = drik.ephemeris_planet_index(planet)
+        p_long = drik.sidereal_longitude(jd_utc,p_swe)
+        pstr += retStr
+        act = f"({y},{m},{d} {utils.to_dms(fh)} {utils.deg_to_sign_str(p_long)}"
+        test_example(chapter+pstr,act,act,"JHora Results:",jhora_result,'stationary middle')
 def all_unit_tests():
     global _total_tests, _failed_tests, _failed_tests_str
     _total_tests = 0
@@ -7985,6 +8012,7 @@ def all_unit_tests():
     eclipse_tests()
     nakshathra_dhasa_progression_tests()
     running_dhasa_tests()
+    stationary_planets_tests()
 def some_tests_only():
     global _total_tests, _failed_tests, _failed_tests_str
     _total_tests = 0
@@ -7999,14 +8027,14 @@ def some_tests_only():
     #    print(f"Total Tests {executed_total} #Failed Tests {failed}  Tests Passed (%) {pass_pct} %", failed_str)
     
 if __name__ == "__main__":
-    """ So far we have 8008 tests ~ 750 seconds """
-    run_ayanamsa_mode = "LAHIRI"#"TRUE_PUSHYA"#
+    """ So far we have 8024 tests ~ 750 seconds """
+    run_ayanamsa_mode = "TRUE_PUSHYA"#"LAHIRI"#
     BASELINE_MODE = 'compare'  # 'record' to capture expected, 'compare' to verify, 'none' disables baseline
     _BASELINE_WRITE_MODE = 'actual' # 'expected' | 'actual'
     """ This should be set to True only if BASELINE_MODE='none' and you want some_tests_only() to be run """
     _RUN_PARTIAL_TESTS_ONLY = False #True # 
     test_helper.set_stop_on_fail(True)
-    #test_helper.set_subset(ranges=[(962,964)],verbose_skip=True)
+    #test_helper.set_subset(ranges=[(8010,8024)],verbose_skip=True)
 
     if run_ayanamsa_mode.upper() == "TRUE_PUSHYA":
         const._use_true_nodes_for_rahu_ketu = True

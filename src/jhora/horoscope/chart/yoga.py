@@ -22,6 +22,7 @@
     Release History:
     V4.8.5: All Planet Positions are restricted to [:const._pp_count_upto_ketu]
     V4.8.6 - Fixed data validation and house_owner calculations from planet positions and some errors fixed.
+    V4.8.7 - removed 'L' from planets in the house
 """
 import json
 from jhora import const,utils
@@ -7688,12 +7689,15 @@ def _durmukha_yoga_calculation(chart_1d=None, planet_positions=None, natural_mal
 
     # 168: Malefics occupy the 2nd
     planets_in_2nd = planets_in_raasi(house_2,p_to_h)#V4.8.0
-    has_malefic_in_2 = any(p != '' and int(p) in _natural_malefics for p in planets_in_2nd)
+    has_malefic_in_2 = any(p != const._ascendant_symbol and int(p) in _natural_malefics for p in planets_in_2nd)
     
     # 168: Lord joins an evil planet
     house_of_lord = p_to_h[lord_of_2nd]
     planets_with_lord = planets_in_raasi(house_of_lord,p_to_h)#V4.8.0
-    joins_evil = any(p != '' and int(p) in _natural_malefics and int(p) != lord_of_2nd for p in planets_with_lord)
+    joins_evil = any(
+        p != const._ascendant_symbol and int(p) in _natural_malefics 
+        and int(p) != lord_of_2nd for p in planets_with_lord
+        )
     
     # 168: Or lord is in debilitation
     is_debilitated = utils.is_planet_in_debilitation(lord_of_2nd, house_of_lord, planet_positions, enforce_deep_debilitation=False)
@@ -8050,7 +8054,7 @@ def _vakchalana_yoga_calculation(chart_1d=None, planet_positions=None, natural_b
         is_cruel_nav = True
     # 3. 2nd House devoid of benefic aspect/association
     planets_in_2nd = planets_in_raasi(house_2,p_to_h)#V4.8.0
-    has_benefic_assoc = any(b in planets_in_2nd for b in _natural_benefics)
+    has_benefic_assoc = any(b != const._ascendant_symbol and b in planets_in_2nd for b in _natural_benefics)
     aspected_by = house.aspected_planets_of_the_raasi(chart_1d, house_2)
     has_benefic_aspect = any(b in aspected_by for b in _natural_benefics)
     return is_malefic_lord and is_cruel_nav and not (has_benefic_assoc or has_benefic_aspect)
@@ -8074,7 +8078,7 @@ def _vishaprayoga_yoga_calculation(chart_rasi=None, planet_positions=None, natur
     house_2 = (lagna_house + 1) % 12
     # Joined by malefic
     planets_in_2nd = planets_in_raasi(house_2,p_to_h,exclude_lagna=True)
-    joined_by_malefic = any(m in planets_in_2nd for m in _natural_malefics)
+    joined_by_malefic = any(m != const._ascendant_symbol and m in planets_in_2nd for m in _natural_malefics)
     # Aspected by malefic
     aspected_by = house.aspected_planets_of_the_raasi(chart_rasi, house_2)
     house_aspected_by_malefic = any(m in aspected_by for m in _natural_malefics)
@@ -8141,11 +8145,11 @@ def _bhratruvriddhi_yoga_calculation(chart_1d=None, planet_positions=None, natur
         # Strength: Exalted, Own, or Friend
         is_strong = utils.is_planet_strong(p_id, p_house, include_neutral_samam=False)
         # Benefic link
-        joined = any(b in planets_in_raasi(p_house,p_to_h) for b in _natural_benefics if b != p_id)#V4.8.0
+        joined = any(b != const._ascendant_symbol and b in planets_in_raasi(p_house,p_to_h) for b in _natural_benefics if b != p_id)#V4.8.0
         aspected = any(b in house.aspected_planets_of_the_planet(chart_1d, p_id) for b in _natural_benefics)
         return is_strong and (joined or aspected)
     # Influence on House 3
-    house_joined = any(b in planets_in_raasi(house_3,p_to_h) for b in _natural_benefics)#V4.8.0
+    house_joined = any(b != const._ascendant_symbol and b in planets_in_raasi(house_3,p_to_h) for b in _natural_benefics)#V4.8.0
     house_aspected = any(b in house.aspected_planets_of_the_raasi(chart_1d, house_3) for b in _natural_benefics)
     return check_strength_and_benefic(lord_of_3) or check_strength_and_benefic(const.MARS_ID) or (house_joined or house_aspected)
 def bhratruvriddhi_yoga(chart_1d, natural_benefics=None):
@@ -9207,7 +9211,7 @@ def _matrudeerghayur_yoga_196_calculation(chart_1d=None, planet_positions=None, 
     _natural_benefics = _get_natural_benefics(chart_1d, natural_benefics)
     # Criteria A: Benefic in the 4th house
     planets_in_4th = planets_in_raasi(house_4_rasi,p_to_h,exclude_lagna=True)
-    has_benefic_in_4th = any(p in _natural_benefics for p in planets_in_4th)
+    has_benefic_in_4th = any(p != const._ascendant_symbol and p in _natural_benefics for p in planets_in_4th)
     # Criteria B: 4th Lord must be Exalted (4) [cite: 6, 7]
     lord_4_rasi = p_to_h[lord_4]
     is_lord_4_exalted = const.house_strengths_of_planets[lord_4][lord_4_rasi] >= const._EXALTED_UCCHAM
@@ -9293,14 +9297,14 @@ def _matrunasa_yoga_198_calculation(chart_rasi=None, planet_positions_rasi=None,
     # 1. Associated with malefic (Conjunction)
     #planets_in_moon_house = [p for p, h in p_to_h_rasi.items() if h == moon_house]
     planets_in_moon_house = planets_in_raasi(moon_house,p_to_h_rasi,exclude_lagna=True)
-    associated_malefic = any(p in _natural_malefics for p in planets_in_moon_house)
+    associated_malefic = any(p != const._ascendant_symbol and p in _natural_malefics for p in planets_in_moon_house)
     # 2. Aspected by malefic
     aspected_by_malefic = any(p in _natural_malefics for p in house.aspected_planets_of_the_raasi(chart_rasi, moon_house))
     # 3. Hemmed in (Papa Kartari)
     prev_house = (moon_house - 1) % 12
     next_house = (moon_house + 1) % 12
-    prev_house_malefic = any(p in _natural_malefics for p in planets_in_raasi(prev_house,p_to_h_rasi,exclude_lagna=True))
-    next_house_malefic = any(p in _natural_malefics for p in planets_in_raasi(next_house,p_to_h_rasi,exclude_lagna=True))
+    prev_house_malefic = any(p != const._ascendant_symbol and p in _natural_malefics for p in planets_in_raasi(prev_house,p_to_h_rasi,exclude_lagna=True))
+    next_house_malefic = any(p != const._ascendant_symbol and p in _natural_malefics for p in planets_in_raasi(next_house,p_to_h_rasi,exclude_lagna=True))
     hemmed = prev_house_malefic and next_house_malefic
     return hemmed or associated_malefic or aspected_by_malefic
 def matrunasa_yoga_199_from_jd_place(jd, place, divisional_chart_factor=1):
@@ -9449,8 +9453,8 @@ def _kapata_yoga_202_calculation(chart_1d=None, planet_positions=None, natural_m
     lord_of_4th_joined_by_malefic = any(p_to_h[m] == house_of_lord_of_4th for m in _natural_malefics)
     prev_house = (house_of_lord_of_4th - 1) % 12
     next_house = (house_of_lord_of_4th + 1) % 12
-    prev_house_malefic = any(p in _natural_malefics for p in planets_in_raasi(prev_house,p_to_h,exclude_lagna=True))
-    next_house_malefic = any(p in _natural_malefics for p in planets_in_raasi(next_house,p_to_h,exclude_lagna=True))
+    prev_house_malefic = any(p != const._ascendant_symbol and p in _natural_malefics for p in planets_in_raasi(prev_house,p_to_h,exclude_lagna=True))
+    next_house_malefic = any(p != const._ascendant_symbol and p in _natural_malefics for p in planets_in_raasi(next_house,p_to_h,exclude_lagna=True))
     is_4th_lord_hemmed_between_malefics = prev_house_malefic and next_house_malefic
     return malefic_joins_4th_house and (lord_of_4th_aspected_by_malefic or lord_of_4th_joined_by_malefic or 
                                         is_4th_lord_hemmed_between_malefics)
@@ -9545,8 +9549,8 @@ def _kapata_yoga_calculation(chart_1d=None, planet_positions=None, maandi_house=
     lord_of_4th_joined_by_malefic = any(p_to_h[m] == house_of_lord_of_4th for m in _natural_malefics)
     prev_house = (house_of_lord_of_4th - 1) % 12
     next_house = (house_of_lord_of_4th + 1) % 12
-    prev_house_malefic = any(p in _natural_malefics for p in planets_in_raasi(prev_house,p_to_h,exclude_lagna=True))
-    next_house_malefic = any(p in _natural_malefics for p in planets_in_raasi(next_house,p_to_h,exclude_lagna=True))
+    prev_house_malefic = any(p != const._ascendant_symbol and p in _natural_malefics for p in planets_in_raasi(prev_house,p_to_h,exclude_lagna=True))
+    next_house_malefic = any(p != const._ascendant_symbol and p in _natural_malefics for p in planets_in_raasi(next_house,p_to_h,exclude_lagna=True))
     is_4th_lord_hemmed_between_malefics = prev_house_malefic and next_house_malefic
     yoga_202 = malefic_joins_4th_house and (lord_of_4th_aspected_by_malefic or lord_of_4th_joined_by_malefic or 
                                         is_4th_lord_hemmed_between_malefics)
@@ -9638,7 +9642,9 @@ def _nishkapata_yoga_205_calculation(chart_1d=None, planet_positions=None,
     # The 4th house must be occupied by a benefic
     benefic_occupies_4th_house = any(p_to_h[bp]==fourth_house for bp in _natural_benefics)
     # The 4th house must be occupied by a planet in exaltation, friendly or own house
-    is_4th_house_strong = any(utils.is_planet_strong(p, fourth_house, include_neutral_samam=False) for p in planets_in_4th_house)
+    is_4th_house_strong = any(
+        utils.is_planet_strong(p, fourth_house, include_neutral_samam=False) for p in planets_in_4th_house
+            if p != const._ascendant_symbol)
     # The 4th house must be a benefic sign.
     is_4th_house_in_benefic_signs = fourth_house in const.benefic_signs
     return benefic_occupies_4th_house or is_4th_house_strong or is_4th_house_in_benefic_signs
@@ -10154,8 +10160,8 @@ def _pithru_saapa_sutakshaya_yoga_calculation(chart_rasi=None, chart_navamsa=Non
     _natural_malefics = natural_malefics if natural_malefics else const.natural_malefics
     prev_house = (sun_house_rasi - 1) % 12
     next_house = (sun_house_rasi + 1) % 12
-    prev_house_malefic = any(p in _natural_malefics for p in planets_in_raasi(prev_house,p_to_h_rasi,exclude_lagna=True))
-    next_house_malefic = any(p in _natural_malefics for p in planets_in_raasi(next_house,p_to_h_rasi,exclude_lagna=True))
+    prev_house_malefic = any(p != const._ascendant_symbol and p in _natural_malefics for p in planets_in_raasi(prev_house,p_to_h_rasi,exclude_lagna=True))
+    next_house_malefic = any(p != const._ascendant_symbol and p in _natural_malefics for p in planets_in_raasi(next_house,p_to_h_rasi,exclude_lagna=True))
     sun_hemmed_between_malefics = prev_house_malefic and next_house_malefic
     return sun_in_fifth_house and (sun_in_debilitation_sign or navamsa_sun_in_capricorn_or_aquarius or sun_hemmed_between_malefics)
 def maathru_saapa_sutakshaya_yoga_from_jd_place(jd, place, divisional_chart_factor=1):

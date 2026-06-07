@@ -319,7 +319,7 @@ class VedicCalendar(QWidget):
             @param use_purnimanta_system: None => Solar Calendar, False=>Amantha, True=>Purnimantha 
         """
         super().__init__()
-        
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)        
         self._day_info_cache = {}
         self._info_label_cache = {}
         self._last_ui_language = None
@@ -722,6 +722,7 @@ class VedicCalendar(QWidget):
         self._clear_calendar_caches()
         self.computeCalendar()
     def computeCalendar(self):
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             self.setUpdatesEnabled(False)
             self._update_resources_if_needed()
@@ -793,7 +794,9 @@ class VedicCalendar(QWidget):
         finally:
             self.setUpdatesEnabled(True)
             self.update()
+            QApplication.restoreOverrideCursor()
     def cell_clicked(self,row,col):
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             self.selected_cell = (row-1,col)
             jd = self.jd[row-1][col]; place = self.start_place
@@ -819,6 +822,9 @@ class VedicCalendar(QWidget):
         except Exception as e:
             tb = sys.exc_info()[2]
             print(f"VedicCalendar:cell_clicked: An error occurred: {e}",'line number',tb.tb_lineno)
+        finally:
+            QApplication.restoreOverrideCursor()
+            self.setFocus(Qt.FocusReason.OtherFocusReason)
     def _update_resources_if_needed(self):
         if self._last_ui_language != self._language:
             self._update_resources()

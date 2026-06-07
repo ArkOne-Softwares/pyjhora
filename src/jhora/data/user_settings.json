@@ -15,7 +15,6 @@
   "use_saravali_formula_for_uccha_bala": true,
   "hora_chart_by_pvr_method": true,
   "ashtottari_bhukthi_starts_from_dhasa_lord": true,
-  "planet_retrogression_calculation_method": 1,
   "force_kali_start_year_for_years_before_kali_year_4009": true,
   "kali_start_year": 13,
   "ritu_per_solar_tamil_month": true,
@@ -34,12 +33,12 @@
   "ashtakavarga_dhasa_method": "SAV_SIGN",
   "ashtakavarga_dhasa_start_rule": "MAX_STRENGTH",
   "ashtakavarga_dhasa_sequence_rule": "STRENGTH_ORDER",
-  "aayu_type": 0,
+  "aayu_type": "NONE",
   "rashmi_type": 1,
   "tara_type": 1,
   "chara_type": 2,
   "drig_type": 1,
   "kalachakra_type": 1,
-  "mandooka_type": 1,
+  "mandooka_type": 2,
   "padhanadhamsa_type": 1
 }

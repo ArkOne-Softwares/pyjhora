@@ -36,8 +36,8 @@ from jhora import const
 # FILE PATHS
 # ============================================================
 CONFIG_DIR = const._DATA_DIR
-FACTORY_SETTINGS_FILE = os.path.join(CONFIG_DIR, "factory_settings.json")
-USER_SETTINGS_FILE = os.path.join(CONFIG_DIR, "user_settings.json")
+FACTORY_SETTINGS_FILE = const.FACTORY_SETTINGS_FILE
+USER_SETTINGS_FILE = const.USER_SETTINGS_FILE
 
 
 # ============================================================
@@ -306,7 +306,10 @@ def apply_setting(key: str) -> None:
     meta = _FACTORY.get(key)
     if not meta:
         return
-
+    set_planet_list_keys = ["use_true_nodes_for_rahu_ketu", "include_western_planets"]
+    set_planet_flag_keys = ["planet_position_reference_frame","planet_position_type","use_aberration_of_light",
+                            "use_gravitational_deflection","use_nutation","rise_set_use_refraction",
+                            "rise_set_use_disc_center_for_rising","rise_set_hindu_rising"]
     value = get_value(key)
 
     setter_name = meta.get("setter")
@@ -314,6 +317,18 @@ def apply_setting(key: str) -> None:
         setter = getattr(const, setter_name, None)
         if callable(setter):
             setter(value)
+            # Keep dependent runtime caches in sync
+            if key in set_planet_list_keys:
+                from jhora.panchanga import drik
+                drik.set_planet_list(
+                    set_rahu_ketu_as_true_nodes=const._use_true_nodes_for_rahu_ketu,
+                    include_western_planets=const._INCLUDE_URANUS_TO_PLUTO
+                )
+            elif key in set_planet_flag_keys:
+                from jhora import utils
+                utils.set_flags_for_planet_positions()
+                utils.set_flags_for_rise_set(flags_for_rise=True)
+                utils.set_flags_for_rise_set(flags_for_rise=False)
         return
 
     const_name = meta.get("const_name")
@@ -398,11 +413,85 @@ def get_settings_dict() -> Dict[str, Dict[str, Any]]:
 def get_current_settings() -> Dict[str, Dict[str, Any]]:
     return get_all_setting_defs()
 
+def validate_const_synchronization():
+    """
+    Validates that hardcoded const fallbacks match factory_settings.json defaults.
+    Loops through all configurations using PyJHora's native normalization engine
+    and dynamically resolves 'enum_class' structural mappings.
+    """
+    with open(FACTORY_SETTINGS_FILE, "r", encoding="utf-8") as f:
+        factory_data = json.load(f)
 
+    for setting_key, metadata in factory_data.items():
+        const_name = metadata.get("const_name")
+        if not const_name or not hasattr(const, const_name):
+            continue
+
+        raw_json_default = metadata["default"]
+        const_value = getattr(const, const_name)
+
+        # 1. Normalize the raw JSON value to its primary data type
+        normalized_json_default = _normalize_value(metadata, raw_json_default)
+
+        # 2. Resolve Enum/Class mappings if designated in metadata
+        enum_class_name = metadata.get("enum_class")
+        if enum_class_name and hasattr(const, enum_class_name):
+            try:
+                enum_class = getattr(const, enum_class_name)
+                
+                # Case A: JSON value is a string (e.g., "SAV_SIGN" or "NONE")
+                if isinstance(normalized_json_default, str):
+                    if hasattr(enum_class, normalized_json_default):
+                        normalized_json_default = getattr(enum_class, normalized_json_default)
+                    elif hasattr(enum_class, '__getitem__'):
+                        try:
+                            normalized_json_default = enum_class[normalized_json_default]
+                        except Exception:
+                            pass
+                
+                # Case B: JSON value is an index integer (e.g., 0, 1, 2)
+                elif isinstance(normalized_json_default, (int, float)) and not isinstance(normalized_json_default, bool):
+                    # Check if the class can be called like a standard Enum class(value)
+                    try:
+                        normalized_json_default = enum_class(normalized_json_default)
+                    except (ValueError, TypeError):
+                        # Fall back to checking raw static class properties matching the integer
+                        for attr in dir(enum_class):
+                            if not attr.startswith("_") and getattr(enum_class, attr) == normalized_json_default:
+                                normalized_json_default = getattr(enum_class, attr)
+                                break
+            except Exception:
+                pass
+
+        # 3. Core matching verification
+        is_match = (const_value == normalized_json_default) or (str(const_value) == str(normalized_json_default))
+
+        # 4. Fallback checks for stringified None values or edge cases
+        if not is_match:
+            const_str = str(const_value).strip().lower()
+            json_str = str(normalized_json_default).strip().lower()
+            if const_str == json_str:
+                is_match = True
+            elif (const_value is None and json_str == "none") or (const_str == "none" and normalized_json_default is None):
+                is_match = True
+
+        # Handle optional string matching ("" vs None)
+        if not is_match and metadata.get("nullable"):
+            if (const_value is None and normalized_json_default == "") or (const_value == "" and normalized_json_default is None):
+                is_match = True
+
+        # Perform the actual safety assert
+        assert is_match, \
+            f"Configuration Drift Error for '{setting_key}'!\n" \
+            f"  const.{const_name} = {const_value} (type: {type(const_value).__name__})\n" \
+            f"  JSON default = {raw_json_default} (normalized/resolved to: {normalized_json_default})"
+    print("✅ Validation Success: All hardcoded const fallbacks are perfectly synchronized with factory_settings.json!")
 # ============================================================
 # MAIN
 # ============================================================
 if __name__ == "__main__":
+    validate_const_synchronization()
+    exit()
     print("Loading settings...")
     load_all_settings(create_if_missing=True, apply=True)
     print("Loaded successfully.")

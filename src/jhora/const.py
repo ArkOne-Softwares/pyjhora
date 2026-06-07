@@ -29,6 +29,8 @@ from jhora._package_info import version as _APP_VERSION
 _sep = os.path.sep
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 _DATA_DIR = os.path.dirname(ROOT_DIR+_sep+"data"+_sep)
+FACTORY_SETTINGS_FILE = os.path.join(_DATA_DIR, "factory_settings.json")
+USER_SETTINGS_FILE = os.path.join(_DATA_DIR, "user_settings.json")
 _IMAGES_PATH = os.path.dirname(ROOT_DIR+_sep+"images"+_sep)
 _IMAGE_ICON_PATH=os.path.join(_IMAGES_PATH+_sep+"lord_ganesha2.jpg")
 _INPUT_DATA_FILE = _DATA_DIR +'program_inputs.txt' #os.path.join(ROOT_DIR,'data'+_sep+'program_inputs.txt')
@@ -146,6 +148,9 @@ def set_node_mode(use_true: bool) -> None:
     _RAHU = swe.TRUE_NODE if _use_true_nodes_for_rahu_ketu else swe.MEAN_NODE
     """ _KETU is always kept as -10 because no other number is allowed in swiss Ephemris """
     _KETU = -10 if _use_true_nodes_for_rahu_ketu else -swe.MEAN_NODE
+
+set_node_mode(_use_true_nodes_for_rahu_ketu)
+
 SUN_TO_SATURN = [*range(SUN_ID,SATURN_ID+1)]
 SUN_TO_KETU = [*range(SUN_ID,KETU_ID+1)]
 SUN_TO_PLUTO = [*range(SUN_ID,PLUTO_ID+1)]
@@ -680,7 +685,6 @@ mean_venus_daily_motions_table_from_1900 = [
 naisargika_bala = [60.00,51.43,17.14,25.71,34.29,42.86,8.57,0.0,0.0]
 minimum_bhava_bala_rupa = 7.0
 planets_retrograde_limits_from_sun = {2:(164,196),3:(144,216),4:(130,230),5:(163,197),6:(115,245)}
-planet_retrogression_calculation_method = 1 # 1 => Old method 2 = Wiki calculations
 lunar_gregory_month_max = 6
 sthree_dheerga_threshold = 13
 sthree_dheerga_threshold_south = 7
@@ -1664,20 +1668,15 @@ PLANET_POSITIONS_TRUE = True
 
 # These two are only meaningful when PLANET_POSITIONS_TRUE == False
 PLANET_POSITIONS_USE_ABERRATION = True
-PLANET_POSITIONS_USE_DEFLECTION = False
+PLANET_POSITIONS_USE_DEFLECTION = True
 
 # Nutation is independent of sidereal/tropical
-PLANET_POSITIONS_USE_NUTATION = False
+PLANET_POSITIONS_USE_NUTATION = True
 
 # Rise / Set defaults
 RISE_SET_USE_REFRACTION = False
 RISE_SET_USE_DISC_CENTER_FOR_RISING = True
 RISE_SET_HINDU_RISING = True
-
-# Nodes (you already have this, keep it if present)
-_use_true_nodes_for_rahu_ketu = True
-
-
 # ============================================================
 # Optional setters (nice for config binding; direct attr also works)
 # ============================================================
@@ -1711,6 +1710,21 @@ def set_rise_set_use_refraction(value: bool) -> None:
     global RISE_SET_USE_REFRACTION
     RISE_SET_USE_REFRACTION = bool(value)
 
+stationary_planet_speed_percent = 0.25
+
+vedic_mean_speeds = {
+    SUN_ID:   0.985556,   # 0°59'08"
+    MOON_ID: 13.176667,   # 13°10'36"
+    MERCURY_ID: 1.383333,  # 01° 23' 00''
+    VENUS_ID: 1.200000,    # 01° 12' 00''
+    MARS_ID: 0.524167,     # 00° 31' 25''
+    JUPITER_ID: 0.083056,  # 00° 04' 59''
+    SATURN_ID: 0.033611,    # 00° 02' 01''
+    RAHU_ID: 0.050000,   # -0°03'00"
+    KETU_ID: 0.050000,   # same as Rahu in mean-node mode
+}
+
+planet_info_round_factors = [3,3,4,3,3,6]
 
 if __name__ == "__main__":
     print('graha',len(_graha_dhasa_dict),len(dhasa_default_options))
