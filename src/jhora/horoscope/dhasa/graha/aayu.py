@@ -406,96 +406,446 @@ def _get_global_constants(jd,place):
     bhava_starts = [(bhava_madhya[i]-0.5*bhava_lengths[i])%30 for i in range(12) ]
     """
     return
-def get_dhasa_antardhasa(jd,place,aayur_type=None,include_antardhasa=True,apply_haranas=True,dhasa_method=2,
-                         divisional_chart_factor=9,chart_method=1):
+
+def get_dhasa_antardhasa(
+    jd,
+    place,
+    aayur_type=None,
+    apply_haranas=True,
+    method=2,
+    divisional_chart_factor=9,
+    chart_method=1,
+    dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,
+    round_duration=True,
+    dhasa_duration_type = None,
+    savana_year_method=None,
+):
     """
         provides Aayu dhasa bhukthi for a given date in julian day (includes birth time)
+
         @param jd: Julian day for birthdate and birth time
-        @param place: Place as tuple (place name, latitude, longitude, timezone) 
+        @param place: Place as tuple (place name, latitude, longitude, timezone)
         @param aayur_type (0=Pindayu, 1=Nisargayu, 2=Amsayu, None=Automatically determine whichever is applicable)
-        @param include_antardhasa: True (include) False (exclude) antardhasa (Default=True)
         @param apply_haranas: (True/False) whether to or not to apply haranas (Default=True)
-        @return: a list of [dhasa_lord,bhukthi_lord,bhukthi_start] if include_antardhasa=True
-        @return: a list of [dhasa_lord,dhasa_start] if include_antardhasa=False
-          Example: [ [7, 5, '1915-02-09'], [7, 0, '1917-06-10'], [7, 1, '1918-02-08'],...]
+        @param dhasa_level_index: Depth level (1..6)
+            1 = Maha only (no Antara)
+            2 = + Antara (Bhukthi)
+            3 = + Pratyantara
+            4 = + Sookshma
+            5 = + Prana
+            6 = + Deha-antara
+
+        @return: (_dhasa_type, rows)
+            _dhasa_type: 0 (Pindayu/Sun), 1 (Nisargayu/Moon), 2 (Amsayu/Lagna)
+            rows:
+              if dhasa_level_index==1: [ (dhasa_lord, dhasa_start, duration_years_rounded), ... ]
+              else:                     [ (dhasa_lord, sub1, [sub2..sub5], dhasa_start, sub_duration_rounded), ... ]
+          Example (L2): [ (7, 5, '1915-02-09 00:00:00 AM', 1.23), (7, 0, '1916-05-10 08:12:34 AM', 1.23), ...]
     """
-    planet_positions = charts.rasi_chart(jd, place)
-    if _DEBUG: print('planet_positions',planet_positions)
+    if aayur_type is None: aayur_type = const.AAYU_TYPE_DEFAULT
+    global one_year_days
+    one_year_days = drik.dhasa_year_duration(dhasa_duration_type=dhasa_duration_type, jd=jd, place=place,
+                                             savana_year_method=savana_year_method)
+    # --- original setup (unchanged) ---
+    planet_positions = charts.rasi_chart(jd, place)[:const._pp_count_upto_ketu]
+    if _DEBUG: print('planet_positions', planet_positions)
     global subha_grahas, asubha_grahas, bhava_houses
     bhava_houses = charts.bhava_houses(jd, place)
-    subha_grahas, asubha_grahas = charts.benefics_and_malefics(jd, place, method=1)#BV Raman's method
-    bm1 = drik.bhaava_madhya(jd, place,const.bhaava_madhya_method); bhava_madhya = bm1[:]+[bm1[0]]
-    if _DEBUG: print('bhava madhya',[utils.to_dms(bm,is_lat_long='plong') for bm in bhava_madhya])
-    bhava_lengths = [(bhava_madhya[i+1]-bhava_madhya[i])%60 for i in range(len(bhava_madhya)-1)]
-    bhava_starts = [bhava_madhya[i]-0.5*bhava_lengths[i] for i in range(12) ]
-    if _DEBUG: print('bhava length',[utils.to_dms(bm,is_lat_long='plong') for bm in bhava_lengths])
-    if _DEBUG: print('bhava start',[utils.to_dms(bs%30,is_lat_long='plong') for bs in bhava_starts])
-    _lagna_duration = _lagna_longevity(jd,place,divisional_chart_factor=divisional_chart_factor,chart_method=chart_method)
-    sp = aayur_type if aayur_type!=None else _get_aayur_type(planet_positions)
-    if _DEBUG: print('stronger of lagna/Sun/Moon',sp)
+    subha_grahas, asubha_grahas = charts.benefics_and_malefics(jd, place, method=1)  # BV Raman's method
+    bm1 = drik.bhaava_madhya(jd, place, bhava_method=1); bhava_madhya = bm1[:] + [bm1[0]]
+    if _DEBUG: print('bhava madhya', [utils.to_dms(bm, is_lat_long='plong') for bm in bhava_madhya])
+    bhava_lengths = [(bhava_madhya[i+1] - bhava_madhya[i]) % 60 for i in range(len(bhava_madhya) - 1)]
+    bhava_starts = [bhava_madhya[i] - 0.5 * bhava_lengths[i] for i in range(12)]
+    if _DEBUG: print('bhava length', [utils.to_dms(bm, is_lat_long='plong') for bm in bhava_lengths])
+    if _DEBUG: print('bhava start', [utils.to_dms(bs % 30, is_lat_long='plong') for bs in bhava_starts])
+    _lagna_duration = _lagna_longevity(jd, place, divisional_chart_factor=divisional_chart_factor, chart_method=chart_method)
+    sp = aayur_type if aayur_type is not None else _get_aayur_type(planet_positions)
+    if _DEBUG: print('stronger of lagna/Sun/Moon', sp)
     p_to_h = utils.get_planet_house_dictionary_from_planet_positions(planet_positions)
     _dhasa_seed = p_to_h[sp]
-    if _DEBUG: print('dhasa seed',_dhasa_seed)
-    dhasa_progression = charts.order_planets_from_kendras_of_raasi(planet_positions[:const._pp_count_upto_saturn], _dhasa_seed,include_lagna=True)
-    if sp in [0,1,const._ascendant_symbol]:
-        dhasa_progression = [sp] + [p for p in dhasa_progression if p!=sp]
-    if _DEBUG: print('dhasa progression',dhasa_progression)
+    if _DEBUG: print('dhasa seed', _dhasa_seed)
+    dhasa_progression = charts.order_planets_from_kendras_of_raasi(
+        planet_positions[:const._pp_count_upto_saturn], _dhasa_seed, include_lagna=True
+    )
+    if sp in [0, 1, const._ascendant_symbol]:
+        dhasa_progression = [sp] + [p for p in dhasa_progression if p != sp]
+    if _DEBUG: print('dhasa progression', dhasa_progression)
+
     start_jd = jd
     dhasas = []
-    
+
     if sp == 0:
         if _DEBUG: print('Aayu type Pindayu')
-        _dhasa_duration = _pindayu(planet_positions,apply_haranas,method=dhasa_method)
+        _dhasa_duration = _pindayu(planet_positions, apply_haranas, method=method)
         _total_duration = _TOTAL_PINDAYU
-        _dhasa_type = 0 # Pindyayu = Sun is the lord
+        _dhasa_type = const.AAYU_TYPE.PINDA  # Pindayu = Sun is the lord
     elif sp == 1:
         if _DEBUG: print('aayu type nisargayu')
-        _dhasa_duration = _nisargayu(planet_positions,apply_haranas,method=dhasa_method)
+        _dhasa_duration = _nisargayu(planet_positions, apply_haranas, method=method)
         _total_duration = _TOTAL_NISARGAYU
-        _dhasa_type = 1 # Nisargayu Moon is the lord
-    else: # sp == const._ascendant_symbol:
+        _dhasa_type = const.AAYU_TYPE.NISARGA  # Nisargayu Moon is the lord
+    else:  # sp == const._ascendant_symbol:
         if _DEBUG: print('aayu type amsayu')
-        _dhasa_duration = _amsayu(planet_positions,apply_haranas,method=dhasa_method)
+        _dhasa_duration = _amsayu(planet_positions, apply_haranas, method=method)
         _total_duration = _TOTAL_AMSAYU
-        _dhasa_type = 2 # Amsayu - Lagna is the lord
+        _dhasa_type = const.AAYU_TYPE.AMSA  # Amsayu - Lagna is the lord
+
     _dhasa_duration[const._ascendant_symbol] = _lagna_longevity(jd, place)
-    if _DEBUG: print('dhasa duration',_dhasa_duration)
-    for lord in dhasa_progression:
-        dd = _dhasa_duration[lord]
-        bhukthis = dhasa_progression # Antardhasa follows same dhasa progression
-        if include_antardhasa:
-            ddb = dd/(len(dhasa_progression))
-            for bhukthi in bhukthis:
-                y,m,d,h = utils.jd_to_gregorian(start_jd)
-                dhasa_start = '%04d-%02d-%02d' %(y,m,d) +' '+utils.to_dms(h, as_string=True)
-                dhasas.append((lord,bhukthi,dhasa_start,round(ddb,2)))
-                start_jd += ddb * one_year_days
+    if _DEBUG: print('dhasa duration', _dhasa_duration)
+
+    # --- depth control (only change you asked for) ---
+    if not (1 <= dhasa_level_index <= 6):
+        raise ValueError("dhasa_level_index must be in 1..6 (1=Maha .. 6=Deha-antara).")
+
+    base_order = list(dhasa_progression)
+    n = len(base_order)
+    if n == 0:
+        return _dhasa_type, []
+    # --- multi-level expansion (fixed order at every sub-level, equal splits) ---
+    def _recurse(level, start_jd_local, duration_years, prefix, out_rows):
+        sub_duration = duration_years / n
+        if level < dhasa_level_index:
+            jd_cursor = start_jd_local
+            for lord in base_order:  # NO rotation (matches your current Antara logic)
+                _recurse(level + 1, jd_cursor, sub_duration, prefix + (lord,), out_rows)
+                jd_cursor += sub_duration * one_year_days
         else:
-            y,m,d,h = utils.jd_to_gregorian(start_jd)
-            dhasa_start = '%04d-%02d-%02d' %(y,m,d) +' '+utils.to_dms(h, as_string=True)
-            dhasas.append((lord,dhasa_start,round(dd,2)))
+            jd_cursor = start_jd_local
+            durn = round(sub_duration,dhasa_level_index+1) if round_duration else sub_duration
+            for lord in base_order:
+                out_rows.append(
+                    (prefix + (
+                        lord,),
+                        utils.jd_to_gregorian(jd_cursor),
+                        durn
+                    )
+                )
+                jd_cursor += sub_duration * one_year_days
+
+    if dhasa_level_index == 1:
+        # Maha only (keep your rounding at L1)
+        for lord in base_order:
+            dd = _dhasa_duration[lord]
+            durn = round(dd,dhasa_level_index+1) if round_duration else dd
+            dhasas.append(
+                ((lord,), utils.jd_to_gregorian(start_jd),durn)
+            )
             start_jd += dd * one_year_days
+    else:
+        # Expand to requested depth
+        for lord in base_order:
+            dd = _dhasa_duration[lord]
+            _recurse(2, start_jd, dd, (lord,), dhasas)
+            start_jd += dd * one_year_days
+
     return _dhasa_type, dhasas
-def pindayu_dhasa_bhukthi(jd,place,include_antardhasa=True,apply_haranas=True,dhasa_method=2,
-                          divisional_chart_factor=9,chart_method=1):
-    return get_dhasa_antardhasa(jd, place, aayur_type=0, include_antardhasa=include_antardhasa, 
-                                apply_haranas=apply_haranas, dhasa_method=dhasa_method,
-                                divisional_chart_factor=divisional_chart_factor,chart_method=chart_method)[1]
-def nisargayu_dhasa_bhukthi(jd,place,include_antardhasa=True,apply_haranas=True,dhasa_method=2,
-                          divisional_chart_factor=9,chart_method=1):
-    return get_dhasa_antardhasa(jd, place, aayur_type=1, include_antardhasa=include_antardhasa, 
-                                apply_haranas=apply_haranas, dhasa_method=dhasa_method,
-                                divisional_chart_factor=divisional_chart_factor,chart_method=chart_method)[1]
-def amsayu_dhasa_bhukthi(jd,place,include_antardhasa=True,apply_haranas=True,dhasa_method=2,
-                          divisional_chart_factor=9,chart_method=1):
-    return get_dhasa_antardhasa(jd, place, aayur_type=2, include_antardhasa=include_antardhasa, 
-                                apply_haranas=apply_haranas, dhasa_method=dhasa_method,
-                                divisional_chart_factor=divisional_chart_factor,chart_method=chart_method)[1]
-def longevity(jd,place,aayu_type=None,dhasa_method=2):
-    _at,_adb = get_dhasa_antardhasa(jd, place, aayur_type=aayu_type, include_antardhasa=False, apply_haranas=True, dhasa_method=dhasa_method)
+
+def pindayu_dhasa_bhukthi(jd,place,dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,apply_haranas=True,method=2,
+                          divisional_chart_factor=9,chart_method=1,dhasa_duration_type=None,savana_year_method=None):
+    return get_dhasa_antardhasa(jd, place, aayur_type=const.AAYU_TYPE.PINDA, dhasa_level_index=dhasa_level_index, 
+                                apply_haranas=apply_haranas, method=method,
+                                divisional_chart_factor=divisional_chart_factor,chart_method=chart_method,
+                                dhasa_duration_type=dhasa_duration_type,savana_year_method=savana_year_method)[1]
+def nisargayu_dhasa_bhukthi(jd,place,dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,apply_haranas=True,method=2,
+                          divisional_chart_factor=9,chart_method=1,dhasa_duration_type=None,savana_year_method=None):
+    return get_dhasa_antardhasa(jd, place, aayur_type=const.AAYU_TYPE.NISARGA, dhasa_level_index=dhasa_level_index, 
+                                apply_haranas=apply_haranas, method=method,
+                                divisional_chart_factor=divisional_chart_factor,chart_method=chart_method,
+                                dhasa_duration_type=dhasa_duration_type,savana_year_method=savana_year_method)[1]
+def amsayu_dhasa_bhukthi(jd,place,dhasa_level_index=const.MAHA_DHASA_DEPTH.ANTARA,apply_haranas=True,method=2,
+                          divisional_chart_factor=9,chart_method=1,dhasa_duration_type=None,savana_year_method=None):
+    return get_dhasa_antardhasa(jd, place, aayur_type=const.AAYU_TYPE.AMSA, dhasa_level_index=dhasa_level_index, 
+                                apply_haranas=apply_haranas, method=method,
+                                divisional_chart_factor=divisional_chart_factor,chart_method=chart_method,
+                                dhasa_duration_type=dhasa_duration_type,savana_year_method=savana_year_method)[1]
+def longevity(jd,place,aayur_type=None,method=2):
+    if aayur_type is None: aayur_type = const.AAYU_TYPE_DEFAULT
+    _at,_adb = get_dhasa_antardhasa(jd, place, aayur_type=aayur_type, dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY,
+                                    apply_haranas=True, method=method)
     _longevity = sum(d for _,_,d in _adb)
     return _longevity,_at
+def aayu_immediate_children(
+    parent_lords,
+    parent_start,                # (Y, M, D, fractional_hour)
+    parent_duration=None,        # float years (optional)
+    parent_end=None,             # (Y, M, D, fractional_hour) (optional)
+    *,
+    jd,
+    place,
+    aayur_type=None,             # 0=Pindayu(Sun), 1=Nisargayu(Moon), 2=Amsayu(Lagna), None=auto
+    apply_haranas=True,          # not required here (kept for API parity)
+    method=2,              # not required here (kept for API parity)
+    chart_method=1,              # used by chart helpers if needed later
+):
+    """
+    Returns ONLY the immediate (p->p+1) children under a given Aayu parent period.
+
+    Output rows:
+        [ (lords_tuple_with_child), child_start_tuple, child_end_tuple ]
+
+    Aayu rules honored here:
+      - The sub-level order is a FIXED base order computed from the birth rāśi chart,
+        NOT rotated by the parent lord (matches your _recurse() logic).
+      - Each child gets an EQUAL fraction of the parent span: parent_years / n.
+
+    Required to compute base order:
+      - jd, place (birth chart to determine strongest among Sun/Moon/Lagna and the seed house).
+
+    Notes:
+      - We do NOT need (or change) the lagna longevity or total system durations here.
+      - We do NOT compute rounding of durations (end times are exact tiling); rounding is only for
+        display or your duration-emitting functions.
+    """
+    if aayur_type is None: aayur_type = const.AAYU_TYPE_DEFAULT
+    # ---- normalize lords path ----
+    if isinstance(parent_lords, int):
+        path = (parent_lords,)
+    elif isinstance(parent_lords, (list, tuple)):
+        if len(parent_lords) == 0:
+            raise ValueError("parent_lords cannot be empty")
+        path = tuple(parent_lords)
+    else:
+        raise TypeError("parent_lords must be int or tuple/list of ints")
+
+    # ---- tuple <-> JD helpers ----
+    def _tuple_to_jd(t):
+        y, m, d, fh = t
+        return utils.julian_day_number(drik.Date(y, m, d), (fh, 0, 0))
+
+    def _jd_to_tuple(jd_val):
+        return utils.jd_to_gregorian(jd_val)
+
+    # ---- parent start/end in JD ----
+    start_jd = _tuple_to_jd(parent_start)
+    if (parent_duration is None) == (parent_end is None):
+        raise ValueError("Provide exactly one of parent_duration (years) or parent_end (tuple).")
+
+    if parent_end is None:
+        parent_years = float(parent_duration)
+        end_jd = start_jd + parent_years * one_year_days
+    else:
+        end_jd = _tuple_to_jd(parent_end)
+        parent_years = (end_jd - start_jd) / one_year_days
+
+    if end_jd <= start_jd:
+        return []
+
+    # ---- Build the fixed base order (NO rotation) ----------------------
+    # 1) Birth rāśi chart & strongest among Sun/Moon/Lagna
+    planet_positions = charts.rasi_chart(jd, place)[:const._pp_count_upto_ketu]
+    # Determine stronger of Lagna/Sun/Moon: let existing helper decide unless forced
+    sp = aayur_type if aayur_type is not None else _get_aayur_type(planet_positions)
+
+    # 2) Dasha seed: house number of the strongest (Sun=0, Moon=1, Lagna='L'/const._ascendant_symbol)
+    p_to_h = utils.get_planet_house_dictionary_from_planet_positions(planet_positions)
+    _dhasa_seed = p_to_h[sp]
+
+    # 3) Order planets from kendras of the rāśi with include_lagna=True
+    base_order = charts.order_planets_from_kendras_of_raasi(
+        planet_positions[:const._pp_count_upto_saturn],
+        _dhasa_seed,
+        include_lagna=True
+    )
+
+    # Per your code: if sp in [Sun, Moon, Lagna], place sp at the front
+    if sp in [0, 1, const._ascendant_symbol]:
+        base_order = [sp] + [p for p in base_order if p != sp]
+
+    n = len(base_order)
+    if n == 0:
+        return []
+
+    # ---- Equal partition of parent across the base order ---------------
+    child_years = parent_years / n
+    children = []
+    cursor = start_jd
+    for idx, lord in enumerate(base_order):
+        # Last child ends exactly at parent_end (closure)
+        if idx == n - 1:
+            child_end = end_jd
+        else:
+            child_end = cursor + child_years * one_year_days
+
+        if child_end > cursor:
+            children.append([
+                path + (lord,),
+                _jd_to_tuple(cursor),
+                _jd_to_tuple(child_end),
+            ])
+        cursor = child_end
+        if cursor >= end_jd:
+            break
+
+    # force last child end to parent_end to avoid rounding leakage
+    if children:
+        children[-1][2] = _jd_to_tuple(end_jd)
+
+    return children
+def get_running_dhasa_for_given_date(
+    current_jd,
+    jd,
+    place,
+    dhasa_level_index=const.MAHA_DHASA_DEPTH.DEHA,
+    dhasa_duration_type = None,
+    savana_year_method=None,
+    **kwargs
+):
+    """
+    Aayu-specific runner that narrows Mahā → … → target depth and returns the full ladder:
+
+        [
+          [(l1,),              start1, end1],           # Mahā
+          [(l1,l2),            start2, end2],           # Antara
+          [(l1,l2,l3),         start3, end3],           # Pratyantara
+          [(l1,l2,l3,l4),      start4, end4],           # Sūkṣma
+          [(l1,l2,l3,l4,l5),   start5, end5],           # Prāṇa
+          [(l1, …, l6),        start6, end6],           # Dehā
+        ]
+
+    kwargs are passed to get_dhasa_antardhasa and aayu_immediate_children as needed:
+      - aayur_type=None
+      - apply_haranas=True
+      - method=2
+      - divisional_chart_factor=9   (not used here but kept for parity)
+      - chart_method=1
+      - round_duration=True (ignored by runner; we work with end times)
+    """
+
+    # ---------- helpers ----------
+    def _as_tuple_lords(x):
+        return (x,) if isinstance(x, int) else tuple(x)
+
+    def _normalize_level1_rows_for_utils(maha_rows):
+        """
+        Accepts your level-1 rows emitted as:
+          [ (lord,), start_tuple, duration_years ]  (standardized 3-field)
+        or legacy 2-field [lord_scalar, start_tuple]
+        Returns: list of (lords_tuple, start_tuple) for utils.
+        """
+        out = []
+        for row in maha_rows:
+            if isinstance(row, (list, tuple)) and len(row) == 2:
+                lords_any, start_t = row
+            elif isinstance(row, (list, tuple)) and len(row) == 3:
+                lords_any, start_t, _dur = row
+            else:
+                raise ValueError(f"Unexpected Mahā row shape: {row}")
+            out.append((_as_tuple_lords(lords_any), start_t))
+        return out
+
+    def _to_utils_periods(children_rows, parent_end_tuple):
+        """
+        children_rows: list of [lords_tuple, start_tuple, end_tuple]
+        -> returns list of (lords_tuple, start_tuple) **plus** a sentinel
+           (any_lords, parent_end_tuple) so utils can infer [start, next_start)
+           for the final child as well.
+        """
+        if not children_rows:
+            return []
+        proj = [(row[0], row[1]) for row in children_rows]
+        proj.append((children_rows[-1][0], parent_end_tuple))  # sentinel for last boundary
+        return proj
+
+    # ---------- clamp target depth ----------
+    try:
+        target_depth = int(dhasa_level_index)
+    except Exception:
+        target_depth = const.MAHA_DHASA_DEPTH.DEHA
+    target_depth = max(const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY, min(const.MAHA_DHASA_DEPTH.DEHA, target_depth))
+
+    # ---------- Level 1: Mahā ----------
+    # Your generator returns (_dhasa_type, rows)
+    _dtype, maha_rows_raw = get_dhasa_antardhasa(
+        jd=jd,
+        place=place,
+        dhasa_level_index=const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY,     # Mahā only
+        dhasa_duration_type = dhasa_duration_type,
+        savana_year_method=savana_year_method,
+        **kwargs
+    )
+    running_all = []
+    # Running Mahā via utils (expects only (lords, start))
+    rd = utils.get_running_dhasa_for_given_date(current_jd, maha_rows_raw)
+    lords = _as_tuple_lords(rd[0])
+    running = [lords, rd[1], rd[2]]
+    running_all.append(running)
+
+    if target_depth == const.MAHA_DHASA_DEPTH.MAHA_DHASA_ONLY:
+        return running_all
+
+    # ---------- Levels 2..target_depth ----------
+    # plumb through options needed by aayu_immediate_children (compute base order)
+    aayur_type = kwargs.get("aayur_type", None)
+    apply_haranas = kwargs.get("apply_haranas", True)
+    method = kwargs.get("method", 2)
+    chart_method = kwargs.get("chart_method", 1)
+
+    for depth in range(2, target_depth + 1):
+        parent_lords, parent_start, parent_end = running
+
+        # Expand only this parent (children: [(lords_with_child), start, end])
+        children = aayu_immediate_children(
+            parent_lords=parent_lords,
+            parent_start=parent_start,
+            parent_end=parent_end,
+            jd=jd,
+            place=place,
+            aayur_type=aayur_type,
+            apply_haranas=apply_haranas,   # not used here, kept for parity
+            method=method,     # not used here, kept for parity
+            chart_method=chart_method,
+        )
+        if not children:
+            raise ValueError("No children generated; check parent span or Aayu base-order inputs.")
+
+        # Prepare for utils: (lords, start) + sentinel(parent_end)
+        periods_for_utils = _to_utils_periods(children, parent_end_tuple=parent_end)
+
+        # Pick running child at this depth
+        rd_k = utils.get_running_dhasa_for_given_date(current_jd, periods_for_utils)
+        lords_k = _as_tuple_lords(rd_k[0])
+        running = [lords_k, rd_k[1], rd_k[2]]
+        running_all.append(running)
+
+    return running_all
+
 if __name__ == "__main__":
+    utils.set_language('en')
+    dob = drik.Date(1996, 12, 7); tob = (10, 34, 0)
+    place = drik.Place('Chennai,IN', 13.0389, 80.2619, +5.5)
+    jd_at_dob = utils.julian_day_number(dob, tob)
+    from datetime import datetime
+    current_date_str, current_time_str = datetime.now().strftime('%Y,%m,%d;%H:%M:%S').split(';')
+    y, m, d = map(int, current_date_str.split(','))
+    hh, mm, ss = map(int, current_time_str.split(':')); fh = hh + mm / 60 + ss / 3600
+    print(utils.date_time_tuple_to_date_time_string(y, m, d, fh))
+    current_jd = utils.julian_day_number(drik.Date(y, m, d), (hh, mm, ss))
+    import time
+    _method = 2
+    for dd in const.DHASA_YEAR_DURATION:
+        yd = drik.dhasa_year_duration(
+            jd=jd_at_dob,
+            place=place,
+            dhasa_duration_type=dd,
+        )
+        print("\n" + "-" * 80)
+        print("Dhasa duration method:", dd.name, dd.value)
+        print("Resolved year duration days:", yd)
+        print("-" * 80)
+        start_time = time.time()
+        print("Deha:", get_running_dhasa_for_given_date(current_jd, jd_at_dob, place,
+                                                          dhasa_level_index=const.MAHA_DHASA_DEPTH.DEHA,
+                                                          method=_method,
+                                                          dhasa_duration_type=dd))
+        print('new method elapsed time', time.time() - start_time)
+        start_time = time.time()
+        _, ad = get_dhasa_antardhasa(jd_at_dob, place, dhasa_level_index=const.MAHA_DHASA_DEPTH.DEHA,
+                                      method=_method,
+                                      dhasa_duration_type=dd)
+        print(utils.get_running_dhasa_at_all_levels_for_given_date(current_jd, ad, const.MAHA_DHASA_DEPTH.DEHA,
+                                                                   extract_running_period_for_all_levels=True))
+        print('old method elapsed time', time.time() - start_time)
+    exit()
     from jhora.tests import pvr_tests
-    pvr_tests._STOP_IF_ANY_TEST_FAILED = False
+    pvr_tests._STOP_IF_ANY_TEST_FAILED = True
     pvr_tests.aayu_test()
