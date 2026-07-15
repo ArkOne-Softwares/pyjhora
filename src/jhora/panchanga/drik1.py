@@ -676,10 +676,14 @@ def vaara(jd):
         @param jd: Julian Day Number of the date/time
         @return: day of the date
           0 = Sunday, 1 = Monday,..., 6 = Saturday
+
+        Note: Julian Day epochs are at noon, so weekday must use floor via
+        (jd + 1.5), not ceil(jd + 1). The ceil form wrongly advances the
+        weekday for any time after noon.
     """
-    answer = int(ceil(jd + 1) % 7)
+    answer = int(jd + 1.5) % 7
     return answer
-  
+ 
 def lunar_month(jd, place):
     """
         Returns lunar month and if it is adhika or not.
