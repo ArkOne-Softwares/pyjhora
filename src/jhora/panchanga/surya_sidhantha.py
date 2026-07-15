@@ -40,7 +40,7 @@ def kali_ahargana(jd):
     """ TODO: CHECK: Should this be int or float? """
     kad = int(jd - const.mahabharatha_tithi_julian_day) # (jd - 588466)
     wday = int(kad) % 7
-    wdayjd = drik.vaara(jd)
+    wdayjd = drik.civil_weekday(jd)
     winc = (wdayjd - 5 - wday)
     wdayc = (wday + winc + 5) % 7
     assert wdayc==wdayjd

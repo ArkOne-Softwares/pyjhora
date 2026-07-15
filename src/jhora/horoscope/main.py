@@ -132,7 +132,7 @@ class Horoscope():
             cal_key_list['timezone_offset_str'] : "{0:.2f}".format(self.timezone_offset),
             cal_key_list['report_date_str'] : "{0:d}-{1:d}-{2:d}".format(self.Date.year,self.Date.month,self.Date.day)#self.Date.isoformat(),         
         }
-        vaaram = drik.vaara(jd)
+        vaaram = drik.vaara(jd, place)
         calendar_info[cal_key_list['vaaram_str']]=utils.DAYS_LIST[vaaram]
         calendar_info[cal_key_list['calculation_type_str']]=cal_key_list['drik_panchang_str']
         if self.calculation_type.lower()=='ss':
